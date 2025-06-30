@@ -23,6 +23,9 @@ const MobileMain = () => {
     // 이미지 원본 사이즈
     const imageSize = { width: 1920, height: 1080 };
 
+    // 사람 위치 점의 이동을 위한 상태
+    const [personPosition, setPersonPosition] = useState({ x: 0, y: 0 });
+
     // 100개의 더미 위치 데이터 생성 (서울 시청 주변을 중심으로 한 동선)
     const dummyLocations = Array.from({ length: 100 }, (_, index) => {
         const baseLat = 37.5665;
@@ -52,6 +55,14 @@ const MobileMain = () => {
                 setLocation({ lat: currentLocation.lat, lng: currentLocation.lng });
                 setLocationHistory(prev => [...prev, currentLocation]);
                 setCurrentIndex(prev => prev + 1);
+                
+                // 사람 위치 점 이동 (위치 기록 시마다)
+                const moveX = (Math.random() - 0.5) * 20; // -10 ~ +10px 랜덤 이동
+                const moveY = (Math.random() - 0.5) * 20; // -10 ~ +10px 랜덤 이동
+                setPersonPosition(prev => ({
+                    x: prev.x + moveX,
+                    y: prev.y + moveY
+                }));
             }, 5000);
 
             return () => clearTimeout(timer);
@@ -323,8 +334,8 @@ const MobileMain = () => {
                 {/* 사람 위치 표시 점 */}
                 <div style={{
                     position: 'absolute',
-                    top: '50%',
-                    left: '50%',
+                    top: `calc(50% + ${personPosition.y}px)`,
+                    left: `calc(50% + ${personPosition.x}px)`,
                     width: '10px',
                     height: '10px',
                     backgroundColor: 'red',
@@ -333,7 +344,8 @@ const MobileMain = () => {
                     zIndex: 1001,
                     boxShadow: '0 0 8px rgba(255, 0, 0, 0.8), 0 0 16px rgba(255, 0, 0, 0.4)',
                     animation: 'pulse 2s infinite',
-                    border: '2px solid rgba(255, 255, 255, 0.8)'
+                    border: '2px solid rgba(255, 255, 255, 0.8)',
+                    transition: 'top 0.5s ease, left 0.5s ease'
                 }} />
 
                 <style>
