@@ -20,6 +20,9 @@ const MobileMain = () => {
     const [initialZoom, setInitialZoom] = useState(1);
     const mapRef = useRef(null);
 
+    // 이미지 원본 사이즈
+    const imageSize = { width: 1920, height: 1080 };
+
     // 100개의 더미 위치 데이터 생성 (서울 시청 주변을 중심으로 한 동선)
     const dummyLocations = Array.from({ length: 100 }, (_, index) => {
         const baseLat = 37.5665;
@@ -104,14 +107,16 @@ const MobileMain = () => {
         if (mapZoom < 1) {
             const newZoom = Math.min(mapZoom * 1.2, 1); // 최대 100%까지만
             setMapZoom(newZoom);
-            addToHistory(mapOffset, newZoom);
+            setMapOffset({ x: 0, y: 0 }); // 중앙으로 고정
+            addToHistory({ x: 0, y: 0 }, newZoom);
         }
     };
 
     const zoomOut = () => {
         const newZoom = Math.max(mapZoom / 1.2, 1); // 최소 100% 유지
         setMapZoom(newZoom);
-        addToHistory(mapOffset, newZoom);
+        setMapOffset({ x: 0, y: 0 }); // 중앙으로 고정
+        addToHistory({ x: 0, y: 0 }, newZoom);
     };
 
 
@@ -150,14 +155,12 @@ const MobileMain = () => {
         const touches = e.touches;
 
         if (touches.length === 1) {
-            // 단일 터치 - 드래그 시작
             setIsDragging(true);
             setLastTouch({
                 x: touches[0].clientX,
                 y: touches[0].clientY
             });
         } else if (touches.length === 2) {
-            // 두 손가락 터치 - 핀치 줌 시작
             const distance = Math.hypot(
                 touches[0].clientX - touches[1].clientX,
                 touches[0].clientY - touches[1].clientY
@@ -167,12 +170,12 @@ const MobileMain = () => {
         }
     };
 
+
     const handleTouchMove = (e) => {
         e.preventDefault();
         const touches = e.touches;
 
         if (touches.length === 1) {
-            // 단일 터치 드래그 - 간단하고 직접적인 처리
             const currentTouch = {
                 x: touches[0].clientX,
                 y: touches[0].clientY
@@ -181,15 +184,29 @@ const MobileMain = () => {
             const deltaX = currentTouch.x - lastTouch.x;
             const deltaY = currentTouch.y - lastTouch.y;
 
-            // 지도 위치 업데이트
-            setMapOffset(prevOffset => ({
-                x: prevOffset.x + deltaX,
-                y: prevOffset.y + deltaY
-            }));
+            const container = mapRef.current;
+            const containerWidth = container?.offsetWidth || 0;
+            const containerHeight = container?.offsetHeight || 0;
 
+            const scaledWidth = imageSize.width * mapZoom;
+            const scaledHeight = imageSize.height * mapZoom;
+
+            const maxOffsetX = Math.max(0, (scaledWidth - containerWidth) / 2);
+            const maxOffsetY = Math.max(0, (scaledHeight - containerHeight) / 2);
+
+            let newX = mapOffset.x + deltaX;
+            let newY = mapOffset.y + deltaY;
+
+            // 화면보다 이미지가 작을 경우 이동 제한
+            if (scaledWidth <= containerWidth) newX = 0;
+            if (scaledHeight <= containerHeight) newY = 0;
+
+            const limitedX = Math.max(-maxOffsetX, Math.min(maxOffsetX, newX));
+            const limitedY = Math.max(-maxOffsetY, Math.min(maxOffsetY, newY));
+
+            setMapOffset({ x: limitedX, y: limitedY });
             setLastTouch(currentTouch);
         } else if (touches.length === 2) {
-            // 핀치 줌
             const distance = Math.hypot(
                 touches[0].clientX - touches[1].clientX,
                 touches[0].clientY - touches[1].clientY
@@ -197,8 +214,13 @@ const MobileMain = () => {
 
             if (initialDistance > 0) {
                 const scale = distance / initialDistance;
-                const newZoom = Math.max(1, Math.min(3, initialZoom * scale)); // 최소 1로 제한
-                setMapZoom(newZoom);
+                const calculatedZoom = initialZoom * scale;
+
+                if (calculatedZoom >= 1) {
+                    const newZoom = Math.min(3, calculatedZoom);
+                    setMapZoom(newZoom);
+                    setMapOffset({ x: 0, y: 0 });
+                }
             }
         }
     };
@@ -207,12 +229,8 @@ const MobileMain = () => {
         e.preventDefault();
         setIsDragging(false);
         setInitialDistance(0);
-
-        // 현재 상태를 히스토리에 추가
-        setTimeout(() => {
-            addToHistory(mapOffset, mapZoom);
-        }, 100);
     };
+
 
     return (
         <Layout>
@@ -226,8 +244,8 @@ const MobileMain = () => {
                     backgroundSize: `auto ${100 * mapZoom}%`,
                     backgroundPosition: `${mapOffset.x}px ${mapOffset.y}px`,
                     backgroundRepeat: 'no-repeat',
-                    flex: 1,                      // ✅ 부모(main)의 공간을 꽉 채움
                     width: '100%',
+                    height: '100vh',
                     position: 'relative',
                     overflow: 'hidden',
                     touchAction: 'none',
@@ -244,7 +262,7 @@ const MobileMain = () => {
                     transform: 'translateY(-50%)',
                     zIndex: 1002
                 }}>
-               
+
 
                 </div>
 
@@ -256,7 +274,7 @@ const MobileMain = () => {
                     transform: 'translateY(-50%)',
                     zIndex: 1002
                 }}>
-      
+
                 </div>
 
                 {/* 중앙 리셋 버튼 */}
