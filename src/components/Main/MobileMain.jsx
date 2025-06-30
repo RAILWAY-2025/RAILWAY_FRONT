@@ -25,6 +25,8 @@ const MobileMain = () => {
 
     // 사람 위치 점의 이동을 위한 상태
     const [personPosition, setPersonPosition] = useState({ x: 0, y: 0 });
+    const [movementPath, setMovementPath] = useState([]); // 이동 경로 저장
+    const [movementDirection, setMovementDirection] = useState(0); // 이동 방향 (각도)
 
     // 100개의 더미 위치 데이터 생성 (서울 시청 주변을 중심으로 한 동선)
     const dummyLocations = Array.from({ length: 100 }, (_, index) => {
@@ -59,10 +61,20 @@ const MobileMain = () => {
                 // 사람 위치 점 이동 (위치 기록 시마다)
                 const moveX = (Math.random() - 0.5) * 20; // -10 ~ +10px 랜덤 이동
                 const moveY = (Math.random() - 0.5) * 20; // -10 ~ +10px 랜덤 이동
-                setPersonPosition(prev => ({
-                    x: prev.x + moveX,
-                    y: prev.y + moveY
-                }));
+                
+                const newPosition = {
+                    x: personPosition.x + moveX,
+                    y: personPosition.y + moveY
+                };
+                
+                setPersonPosition(newPosition);
+                
+                // 이동 경로에 현재 위치 추가
+                setMovementPath(prev => [...prev, newPosition]);
+                
+                // 이동 방향 계산 (각도)
+                const angle = Math.atan2(moveY, moveX) * 180 / Math.PI;
+                setMovementDirection(angle);
             }, 5000);
 
             return () => clearTimeout(timer);
@@ -347,6 +359,47 @@ const MobileMain = () => {
                     border: '2px solid rgba(255, 255, 255, 0.8)',
                     transition: 'top 0.5s ease, left 0.5s ease'
                 }} />
+
+                {/* 이동 방향 화살표 */}
+                <div style={{
+                    position: 'absolute',
+                    top: `calc(50% + ${personPosition.y}px)`,
+                    left: `calc(50% + ${personPosition.x}px)`,
+                    width: '0',
+                    height: '0',
+                    borderLeft: '6px solid transparent',
+                    borderRight: '6px solid transparent',
+                    borderBottom: '10px solid red',
+                    transform: `translate(-50%, -50%) rotate(${movementDirection}deg) translateY(-15px)`,
+                    zIndex: 1000,
+                    transition: 'transform 0.5s ease',
+                    filter: 'drop-shadow(0 0 4px rgba(255, 0, 0, 0.6))'
+                }} />
+
+                {/* 이동 경로 대시선 */}
+                <svg
+                    style={{
+                        position: 'absolute',
+                        top: '0',
+                        left: '0',
+                        width: '100%',
+                        height: '100%',
+                        zIndex: 999,
+                        pointerEvents: 'none'
+                    }}
+                >
+                    <path
+                        d={movementPath.length > 1 ? 
+                            `M ${movementPath.map((pos, index) => 
+                                `${50 + (pos.x / 10)}% ${50 + (pos.y / 10)}%`
+                            ).join(' L ')}` : ''}
+                        stroke="red"
+                        strokeWidth="2"
+                        fill="none"
+                        strokeDasharray="5,5"
+                        opacity="0.7"
+                    />
+                </svg>
 
                 <style>
                     {`
