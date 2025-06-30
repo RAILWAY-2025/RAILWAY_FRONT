@@ -346,8 +346,8 @@ const MobileMain = () => {
                 {/* 사람 위치 표시 점 */}
                 <div style={{
                     position: 'absolute',
-                    top: `calc(50% + ${personPosition.y}px)`,
-                    left: `calc(50% + ${personPosition.x}px)`,
+                    top: `calc(50% + ${personPosition.y + mapOffset.y}px)`,
+                    left: `calc(50% + ${personPosition.x + mapOffset.x}px)`,
                     width: '10px',
                     height: '10px',
                     backgroundColor: 'red',
@@ -363,8 +363,8 @@ const MobileMain = () => {
                 {/* 이동 방향 화살표 */}
                 <div style={{
                     position: 'absolute',
-                    top: `calc(50% + ${personPosition.y}px)`,
-                    left: `calc(50% + ${personPosition.x}px)`,
+                    top: `calc(50% + ${personPosition.y + mapOffset.y}px)`,
+                    left: `calc(50% + ${personPosition.x + mapOffset.x}px)`,
                     width: '0',
                     height: '0',
                     borderLeft: '6px solid transparent',
