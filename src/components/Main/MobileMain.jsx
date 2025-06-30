@@ -320,6 +320,41 @@ const MobileMain = () => {
                     확대: {Math.round(mapZoom * 100)}%
                 </div>
 
+                {/* 사람 위치 표시 점 */}
+                <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    width: '10px',
+                    height: '10px',
+                    backgroundColor: 'red',
+                    borderRadius: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    zIndex: 1001,
+                    boxShadow: '0 0 8px rgba(255, 0, 0, 0.8), 0 0 16px rgba(255, 0, 0, 0.4)',
+                    animation: 'pulse 2s infinite',
+                    border: '2px solid rgba(255, 255, 255, 0.8)'
+                }} />
+
+                <style>
+                    {`
+                        @keyframes pulse {
+                            0% {
+                                transform: translate(-50%, -50%) scale(1);
+                                opacity: 1;
+                            }
+                            50% {
+                                transform: translate(-50%, -50%) scale(1.2);
+                                opacity: 0.8;
+                            }
+                            100% {
+                                transform: translate(-50%, -50%) scale(1);
+                                opacity: 1;
+                            }
+                        }
+                    `}
+                </style>
+
                 {/* <h6 style={{margin:0,textAlign:'left'}}>모바일 메인 화면</h6> */}
                 {isTracking ? (
                     <>
