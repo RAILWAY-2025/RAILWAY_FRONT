@@ -1,0 +1,128 @@
+networks:
+  railway-fn-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 191.168.10.0/24
+    driver_opts:
+      com.docker.network.driver.mtu: 8999
+      com.docker.network.bridge.enable_icc: "true"
+      com.docker.network.bridge.enable_ip_masquerade: "true"
+
+services:
+#   fn:
+#     build:
+#       context: ./FN
+#       dockerfile: Dockerfile
+#     image: react-docker-app:latest
+#     container_name: react-container
+#     deploy:
+#       resources:
+#         limits:
+#           memory: 256M
+#           cpus: '0.6'
+#         reservations:
+#           memory: 128M
+#           cpus: '0.3'
+#     networks:
+#       my-exam-network:
+#         ipv4_address: 192.168.1.10
+#     dns_opt:
+#       - use-vc
+#     sysctls:
+#       - net.core.somaxconn=1024
+#       - net.ipv4.tcp_max_syn_backlog=1024
+#       - net.ipv4.ip_local_port_range=1024 65535
+#     volumes:
+#       - /tmp/nginx/client-body:/var/lib/nginx/client-body
+#     environment:
+#       - NODE_ENV=development
+#       - REACT_APP_API_URL=/bn  # nginx가 프록시할 경로
+#       - NGINX_MAX_UPLOAD_SIZE=10G
+#       - NGINX_PROXY_TIMEOUT=600
+#       - NGINX_CONNECT_TIMEOUT=600
+#     depends_on:
+#       bn:
+#         condition: service_healthy
+#     ports:
+#       - "3000:80"
+
+#   mysql-exporter:
+#     build:
+#       context: ./exporters/mysql
+#       dockerfile: Dockerfile
+#     image: custom-mysql-exporter:latest
+#     container_name: mysql-exporter
+#     command:
+#       - --web.listen-address=:9104
+#       - --collect.info_schema.tables
+#       - --collect.info_schema.innodb_metrics
+#       - --collect.global_status
+#       - --collect.global_variables
+#       - --collect.slave_status
+#       - --collect.info_schema.processlist
+#       - --config.my-cnf=/etc/mysqld-exporter/.my.cnf
+#     networks:
+#       my-exam-network:
+#         ipv4_address: 192.168.1.31
+#     ports:
+#       - "9104:9104"
+#     depends_on:
+#       mysql8:
+#         condition: service_healthy
+#     restart: unless-stopped
+
+
+#   redis-exporter:
+#     build:
+#       context: ./exporters/redis
+#       dockerfile: Dockerfile
+#     image: custom-redis-exporter:latest
+#     container_name: redis-exporter
+#     networks:
+#       my-exam-network:
+#         ipv4_address: 192.168.1.51
+#     ports:
+#       - "9121:9121"
+#     depends_on:
+#       - redis
+
+#   nodejs-exporter:
+#     build:
+#       context: ./exporters/nginx
+#       dockerfile: Dockerfile
+#     image: custom-nginx-exporter:latest
+#     container_name: fn-exporter
+#     networks:
+#       my-exam-network:
+#         ipv4_address: 192.168.1.11
+#     ports:
+#       - "9113:9113"
+#     depends_on:
+#       - fn
+
+  # judge_fn:
+  #   build:
+  #     context: ./JUDGE_FN
+  #     dockerfile: Dockerfile
+  #     args:
+  #       - SERVER_URL=http://localhost:2358
+  #   image: judge_fn:latest
+  #   container_name: judge_fn
+  #   networks:
+  #     - my-exam-network
+  #   ports:
+  #     - "3001:80"
+  #   env_file:
+  #     - ./JUDGE_FN/.env
+  #   restart: unless-stopped
+
+volumes:
+  judge_bn_data:
+  # bn_logs:
+  #   driver: local
+  # bn_data:
+  #   driver: local
+  # nginx_upload_cache:
+  #   driver: local
+ 
