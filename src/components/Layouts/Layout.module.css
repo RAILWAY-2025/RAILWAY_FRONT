@@ -38,7 +38,8 @@
         flex-direction: column;
         position: relative;
         height: 100vh;
-      }
+        /* 아래에서 예시로 수정 */
+    }
 
     /* .footer {
         font-size: 0.8rem;

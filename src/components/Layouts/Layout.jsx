@@ -8,7 +8,7 @@ return (
 <div className={styles.layoutWrapper}>
 <div className={styles.header}><Header /></div>
 <main className={styles.main}>{children}</main>
-<div className={styles.footer}><Footer /></div>
+{/* <div className={styles.footer}><Footer /></div> */}
 </div>
 );
 };

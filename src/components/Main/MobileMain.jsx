@@ -235,6 +235,7 @@ const MobileMain = () => {
                     flexDirection: 'column'
                 }}
             >
+
                 {/* 확대/축소 버튼들 */}
                 <div style={{
                     position: 'absolute',
@@ -243,47 +244,8 @@ const MobileMain = () => {
                     transform: 'translateY(-50%)',
                     zIndex: 1002
                 }}>
-                    <button
-                        onClick={zoomOut}
-                        style={{
-                            width: '40px',
-                            height: '40px',
-                            backgroundColor: 'rgba(0, 123, 255, 0.8)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '50%',
-                            fontSize: '18px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginBottom: '10px',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                        }}
-                        title="축소"
-                    >
-                        −
-                    </button>
-                    <button
-                        onClick={zoomIn}
-                        style={{
-                            width: '40px',
-                            height: '40px',
-                            backgroundColor: 'rgba(0, 123, 255, 0.8)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '50%',
-                            fontSize: '18px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                        }}
-                        title="확대"
-                    >
-                        +
-                    </button>
+               
+
                 </div>
 
                 {/* 이전/다음 버튼들 */}
@@ -294,49 +256,7 @@ const MobileMain = () => {
                     transform: 'translateY(-50%)',
                     zIndex: 1002
                 }}>
-                    <button
-                        onClick={goPrevious}
-                        disabled={historyIndex <= 0}
-                        style={{
-                            width: '40px',
-                            height: '40px',
-                            backgroundColor: historyIndex <= 0 ? 'rgba(108, 117, 125, 0.5)' : 'rgba(40, 167, 69, 0.8)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '50%',
-                            fontSize: '16px',
-                            cursor: historyIndex <= 0 ? 'not-allowed' : 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginBottom: '10px',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                        }}
-                        title="이전"
-                    >
-                        ◀
-                    </button>
-                    <button
-                        onClick={goNext}
-                        disabled={historyIndex >= mapHistory.length - 1}
-                        style={{
-                            width: '40px',
-                            height: '40px',
-                            backgroundColor: historyIndex >= mapHistory.length - 1 ? 'rgba(108, 117, 125, 0.5)' : 'rgba(40, 167, 69, 0.8)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '50%',
-                            fontSize: '16px',
-                            cursor: historyIndex >= mapHistory.length - 1 ? 'not-allowed' : 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                        }}
-                        title="다음"
-                    >
-                        ▶
-                    </button>
+      
                 </div>
 
                 {/* 중앙 리셋 버튼 */}
@@ -389,6 +309,7 @@ const MobileMain = () => {
                             style={{
                                 fontSize: '10px',
                                 display: 'flex',
+                                justifyContent: 'space-between',
                                 gap: '10px',
                                 backgroundColor: 'rgba(255, 255, 255, 0.8)',
                                 padding: '10px',
@@ -396,10 +317,11 @@ const MobileMain = () => {
                                 margin: '10px'
                             }}
                         >
-                            <p>실시간 위치 정보:</p>
-                            <p>위도: {location.lat?.toFixed(6)}</p>
-                            <p>경도: {location.lng?.toFixed(6)}</p>
-                            <p>현재 위치: {currentIndex} / {dummyLocations.length}</p>
+                            <div>실시간 위치 정보:</div>
+                            <div>TIME: {new Date().toLocaleTimeString()}</div>
+                            <div>LAT: {location.lat?.toFixed(6)}</div>
+                            <div>LNG: {location.lng?.toFixed(6)}</div>
+                            {/* <p>현재 위치: {currentIndex} / {dummyLocations.length}</p> */}
                         </div>
 
                         <div
