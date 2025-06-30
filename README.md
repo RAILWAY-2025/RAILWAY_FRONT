@@ -1,6 +1,7 @@
 # 철도 작업장 안전관리 웹
 
 
+<div style="background-color:red">
 ```mermaid
 gantt
 title 프로젝트 작업 일정
@@ -25,3 +26,4 @@ section 배포 및 운영
 정식 배포            :         a9, 2025-06-25, 1d
 운영 및 유지보수     :         a10, 2025-06-26, 5d
 ```
+</div>
