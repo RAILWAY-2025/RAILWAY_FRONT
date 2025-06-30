@@ -12,23 +12,23 @@ axisFormat %m/%d
 section 계획
 요구사항 수집       :done,    a1, 2025-06-01, 3d
 기획 및 설계        :done,    a2, 2025-06-04, 4d
-_Empty1            :done,    dummy1, 2025-06-01 0d
+_Empty1            :done,    dummy1, 2025-06-01, 0d
 
 section 실행
 디자인              :active,  a3, 2025-06-08, 4d
 프론트엔드 개발       :         a4, 2025-06-12, 4d
 백엔드 개발          :         a5, 2025-06-16, 4d
-_Empty2            :done,    dummy2, 2025-06-01 0d
+_Empty2            :done,    dummy2, 2025-06-01, 0d
 
 section 테스트
 기능 테스트          :         a6, 2025-06-20, 2d
 통합 테스트          :         a7, 2025-06-22, 2d
-_Empty3            :done,    dummy3, 2025-06-01 0d
+_Empty3            :done,    dummy3, 2025-06-01, 0d
 
 section 배포 및 운영
 배포 준비            :         a8, 2025-06-24, 1d
 정식 배포            :         a9, 2025-06-25, 1d
 운영 및 유지보수     :         a10, 2025-06-26, 5d
-_Empty4            :done,    dummy4, 2025-06-01 0d
+_Empty4            :done,    dummy4, 2025-06-01, 0d
 ```
 
