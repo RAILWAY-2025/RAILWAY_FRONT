@@ -92,11 +92,11 @@ const MobileMain = () => {
                             style={{
                                 marginTop: '20px',
                                 width: '120px',
-                                height: 'auto',
+                                height: '200px',
                                 position: 'absolute',
                                 right: isHistoryVisible ? '0' : '-120px',
-                                bottom: '110px',
-                                
+                                bottom: '40px',
+                                maxHeight: '200px',
                                 transition: 'right 0.3s ease-in-out',
                                 backgroundColor: 'white',
                                 border: '1px solid #ccc',
@@ -107,8 +107,7 @@ const MobileMain = () => {
                             <div style={{
                                 position: 'absolute',
                                 left: '-20px',
-                                top: '50%',
-                                transform: 'translateY(-50%)',
+                                top: '100px',
                                 width: '20px',
                                 height: '40px',
                                 backgroundColor: '#007bff',
@@ -127,7 +126,7 @@ const MobileMain = () => {
                             </div>
 
                             {isHistoryVisible && (
-                                <>
+                                <div >
                                     <h6 style={{ marginBottom: '5px', marginTop: '5px', backgroundColor: '#f0f8ff', padding: "5px 0" }}>
                                         위치 기록 ({locationHistory.length}개)
                                     </h6>
@@ -150,7 +149,7 @@ const MobileMain = () => {
                                             </div>
                                         ))}
                                     </div>
-                                </>
+                                </div>
                             )}
                         </div>
                     </>
