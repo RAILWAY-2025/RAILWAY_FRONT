@@ -86,6 +86,8 @@ const MobileMain = () => {
         setIsTracking(true);
         setCurrentIndex(0);
         setLocationHistory([]);
+        setPersonPosition({ x: 0, y: 0 }); // 사람 위치 초기화
+        setMovementPath([]); // 이동 경로 초기화
     };
 
     const handleDecline = () => {
@@ -300,34 +302,6 @@ const MobileMain = () => {
 
                 </div>
 
-                {/* 중앙 리셋 버튼 */}
-                <div style={{
-                    position: 'absolute',
-                    top: '10px',
-                    right: '10px',
-                    zIndex: 1002
-                }}>
-                    <button
-                        onClick={resetMapPosition}
-                        style={{
-                            width: '40px',
-                            height: '40px',
-                            backgroundColor: 'rgba(108, 117, 125, 0.8)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '50%',
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                        }}
-                        title="중앙으로 이동"
-                    >
-                        ⌂
-                    </button>
-                </div>
 
                 {/* 확대/축소 정보 표시 */}
                 <div style={{
@@ -344,62 +318,68 @@ const MobileMain = () => {
                 </div>
 
                 {/* 사람 위치 표시 점 */}
-                <div style={{
-                    position: 'absolute',
-                    top: `calc(50% + ${personPosition.y + mapOffset.y}px)`,
-                    left: `calc(50% + ${personPosition.x + mapOffset.x}px)`,
-                    width: '10px',
-                    height: '10px',
-                    backgroundColor: 'red',
-                    borderRadius: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    zIndex: 1001,
-                    boxShadow: '0 0 8px rgba(255, 0, 0, 0.8), 0 0 16px rgba(255, 0, 0, 0.4)',
-                    animation: 'pulse 2s infinite',
-                    border: '2px solid rgba(255, 255, 255, 0.8)',
-                    transition: 'top 0.5s ease, left 0.5s ease'
-                }} />
+                {isTracking && (
+                    <div style={{
+                        position: 'absolute',
+                        top: `calc(50% + ${personPosition.y + mapOffset.y}px)`,
+                        left: `calc(50% + ${personPosition.x + mapOffset.x}px)`,
+                        width: '10px',
+                        height: '10px',
+                        backgroundColor: 'red',
+                        borderRadius: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        zIndex: 1001,
+                        boxShadow: '0 0 8px rgba(255, 0, 0, 0.8), 0 0 16px rgba(255, 0, 0, 0.4)',
+                        animation: 'pulse 2s infinite',
+                        border: '2px solid rgba(255, 255, 255, 0.8)',
+                        transition: 'top 0.5s ease, left 0.5s ease'
+                    }} />
+                )}
 
                 {/* 이동 방향 화살표 */}
-                <div style={{
-                    position: 'absolute',
-                    top: `calc(50% + ${personPosition.y + mapOffset.y}px)`,
-                    left: `calc(50% + ${personPosition.x + mapOffset.x}px)`,
-                    width: '0',
-                    height: '0',
-                    borderLeft: '6px solid transparent',
-                    borderRight: '6px solid transparent',
-                    borderBottom: '10px solid red',
-                    transform: `translate(-50%, -50%) rotate(${movementDirection}deg) translateY(-15px)`,
-                    zIndex: 1000,
-                    transition: 'transform 0.5s ease',
-                    filter: 'drop-shadow(0 0 4px rgba(255, 0, 0, 0.6))'
-                }} />
+                {isTracking && (
+                    <div style={{
+                        position: 'absolute',
+                        top: `calc(50% + ${personPosition.y + mapOffset.y}px)`,
+                        left: `calc(50% + ${personPosition.x + mapOffset.x}px)`,
+                        width: '0',
+                        height: '0',
+                        borderLeft: '6px solid transparent',
+                        borderRight: '6px solid transparent',
+                        borderBottom: '10px solid red',
+                        transform: `translate(-50%, -50%) rotate(${movementDirection}deg) translateY(-15px)`,
+                        zIndex: 1000,
+                        transition: 'transform 0.5s ease',
+                        filter: 'drop-shadow(0 0 4px rgba(255, 0, 0, 0.6))'
+                    }} />
+                )}
 
                 {/* 이동 경로 대시선 */}
-                <svg
-                    style={{
-                        position: 'absolute',
-                        top: '0',
-                        left: '0',
-                        width: '100%',
-                        height: '100%',
-                        zIndex: 999,
-                        pointerEvents: 'none'
-                    }}
-                >
-                    <path
-                        d={movementPath.length > 1 ? 
-                            `M ${movementPath.map((pos, index) => 
-                                `${50 + (pos.x / 10)}% ${50 + (pos.y / 10)}%`
-                            ).join(' L ')}` : ''}
-                        stroke="red"
-                        strokeWidth="2"
-                        fill="none"
-                        strokeDasharray="5,5"
-                        opacity="0.7"
-                    />
-                </svg>
+                {isTracking && (
+                    <svg
+                        style={{
+                            position: 'absolute',
+                            top: '0',
+                            left: '0',
+                            width: '100%',
+                            height: '100%',
+                            zIndex: 999,
+                            pointerEvents: 'none'
+                        }}
+                    >
+                        <path
+                            d={movementPath.length > 1 ? 
+                                `M ${movementPath.map((pos, index) => 
+                                    `${50 + (pos.x / 10)}% ${50 + (pos.y / 10)}%`
+                                ).join(' L ')}` : ''}
+                            stroke="red"
+                            strokeWidth="2"
+                            fill="none"
+                            strokeDasharray="5,5"
+                            opacity="0.7"
+                        />
+                    </svg>
+                )}
 
                 <style>
                     {`
