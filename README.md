@@ -10,12 +10,8 @@ axisFormat %m/%d
 %% 화면에 꽉 차 보이도록 섹션을 충분히 배치
 
 section 계획
-요구사항 수집       :done,    a1, 2025-06-01, 3d
-''            :done,    dummy1, 2025-06-01, 3d
-기획 및 설계        :done,    a2, 2025-06-04, 4d
-''            :done,    dummy552, 2025-06-01, 0d
-''            :done,    dummy12, 2025-06-01, 0d
-''            :done,    dummy5555, 2025-06-01, 0d
+요구사항 수집       :done,    a1, 2025-06-01, 10d
+
 
 section 실행
 디자인              :active,  a3, 2025-06-08, 4d
