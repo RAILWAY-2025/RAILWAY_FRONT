@@ -15,7 +15,7 @@ networks:
 services:
   fn:
     build:
-      context: ./FN
+      context: ./
       dockerfile: Dockerfile
     image: react-docker-app:latest
     container_name: react-container
@@ -52,37 +52,38 @@ services:
           memory: 1536M  # 1.5GB
           cpus: '1.0'
 
-  nginx-proxy:
-    image: jwilder/nginx-proxy
-    container_name: nginx-proxy
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-      - ./certs:/etc/nginx/certs
-      - ./vhost.d:/etc/nginx/vhost.d
-      - ./html:/usr/share/nginx/html
-    networks:
-      - my-exam-network
-    restart: always
+  # 인증서 발급 관련 Docker
+  # nginx-proxy:
+  #   image: jwilder/nginx-proxy
+  #   container_name: nginx-proxy
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - /var/run/docker.sock:/tmp/docker.sock:ro
+  #     - ./certs:/etc/nginx/certs
+  #     - ./vhost.d:/etc/nginx/vhost.d
+  #     - ./html:/usr/share/nginx/html
+  #   networks:
+  #     - railway-network
+  #   restart: always
 
-  nginx-letsencrypt:
-    image: jrcs/letsencrypt-nginx-proxy-companion
-    container_name: nginx-letsencrypt
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./certs:/etc/nginx/certs
-      - ./vhost.d:/etc/nginx/vhost.d
-      - ./html:/usr/share/nginx/html
-    environment:
-      - NGINX_PROXY_CONTAINER=nginx-proxy
-      - DEFAULT_EMAIL=jwg8910@naver.com
-    depends_on:
-      - nginx-proxy
-    networks:
-      - my-exam-network
-    restart: always
+  # nginx-letsencrypt:
+  #   image: jrcs/letsencrypt-nginx-proxy-companion
+  #   container_name: nginx-letsencrypt
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
+  #     - ./certs:/etc/nginx/certs
+  #     - ./vhost.d:/etc/nginx/vhost.d
+  #     - ./html:/usr/share/nginx/html
+  #   environment:
+  #     - NGINX_PROXY_CONTAINER=nginx-proxy
+  #     - DEFAULT_EMAIL=jwg8910@naver.com
+  #   depends_on:
+  #     - nginx-proxy
+  #   networks:
+  #     - my-exam-network
+  #   restart: always
 
   # tunnel:
   #   build:
