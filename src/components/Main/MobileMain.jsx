@@ -265,7 +265,7 @@ const MobileMain = () => {
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
                 style={{
-                    backgroundImage: 'url(/images/maps/jinyung-map.png)',
+                    backgroundImage: `url(${process.env.PUBLIC_URL}/images/maps/jinyung-map.png)`,
                     backgroundSize: `auto ${100 * mapZoom}%`,
                     backgroundPosition: `${mapOffset.x}px ${mapOffset.y}px`,
                     backgroundRepeat: 'no-repeat',
