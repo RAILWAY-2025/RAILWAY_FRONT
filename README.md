@@ -14,6 +14,10 @@ section 계획
 기획 및 설계        :done,    a2, 2025-06-04, 4d
 ''            :done,    dummy1, 2025-06-01, 0d
 ''            :done,    dummy55, 2025-06-01, 0d
+''            :done,    dummy56, 2025-06-01, 0d
+''            :done,    dummy552, 2025-06-01, 0d
+''            :done,    dummy12, 2025-06-01, 0d
+''            :done,    dummy5555, 2025-06-01, 0d
 
 section 실행
 디자인              :active,  a3, 2025-06-08, 4d
