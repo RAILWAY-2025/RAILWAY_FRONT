@@ -109,7 +109,7 @@ const MobileMain = () => {
     };
 
     const zoomOut = () => {
-        const newZoom = Math.max(mapZoom / 1.2, 1); // 1 이하로 축소 불가
+        const newZoom = Math.max(mapZoom / 1.2, 1); // 최소 100% 유지
         setMapZoom(newZoom);
         addToHistory(mapOffset, newZoom);
     };
@@ -223,14 +223,16 @@ const MobileMain = () => {
                 onTouchEnd={handleTouchEnd}
                 style={{
                     backgroundImage: 'url(/images/maps/jinyung-map.png)',
-                    backgroundSize: `auto ${100 * mapZoom}vh`,
-                    backgroundPosition: `${mapOffset.x}px ${mapOffset.y}px`, // ✅ 수정
+                    backgroundSize: `auto ${100 * mapZoom}%`,
+                    backgroundPosition: `${mapOffset.x}px ${mapOffset.y}px`,
                     backgroundRepeat: 'no-repeat',
-                    height: '100vh',
+                    flex: 1,                      // ✅ 부모(main)의 공간을 꽉 채움
                     width: '100%',
                     position: 'relative',
                     overflow: 'hidden',
-                    touchAction: 'none' // 기본 터치 동작 비활성화
+                    touchAction: 'none',
+                    display: 'flex',
+                    flexDirection: 'column'
                 }}
             >
                 {/* 확대/축소 버튼들 */}
