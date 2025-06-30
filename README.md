@@ -11,10 +11,8 @@ axisFormat %m/%d
 
 section 계획
 요구사항 수집       :done,    a1, 2025-06-01, 3d
+''            :done,    dummy1, 2025-06-01, 3d
 기획 및 설계        :done,    a2, 2025-06-04, 4d
-''            :done,    dummy1, 2025-06-01, 0d
-''            :done,    dummy55, 2025-06-01, 0d
-''            :done,    dummy56, 2025-06-01, 0d
 ''            :done,    dummy552, 2025-06-01, 0d
 ''            :done,    dummy12, 2025-06-01, 0d
 ''            :done,    dummy5555, 2025-06-01, 0d
