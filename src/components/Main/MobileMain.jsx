@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import Layout from '../Layouts/Layout';
+import Layout from '../Layouts/Admin/Mobile/Layout';
 
 const MobileMain = () => {
     const [showModal, setShowModal] = useState(true);
