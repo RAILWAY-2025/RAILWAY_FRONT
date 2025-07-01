@@ -3,11 +3,15 @@ import Layout from '../Layouts/Woker/Layout';
 
 const WorkerMain = ({ onLogout }) => {
     const [currentTask, setCurrentTask] = useState('');
-    const [workStatus, setWorkStatus] = useState('대기중'); // '대기중', '작업중', '작업일시중지'
+    const [workStatus, setWorkStatus] = useState('대기중'); // '대기중', '작업중', '작업일시중지', '완료'
     const [completedTasks, setCompletedTasks] = useState([]); // 완료된 작업 목록
     const [taskList, setTaskList] = useState([]); // 동적 작업 목록
     const [editingTask, setEditingTask] = useState(null); // 수정 중인 작업 ID
     const [activeTaskId, setActiveTaskId] = useState(null); // 현재 활성화된 작업 ID
+    const [isComposing, setIsComposing] = useState(false); // IME 조합 상태
+    const [workStartTime, setWorkStartTime] = useState(null); // 작업 시작 시간
+    const [workEndTime, setWorkEndTime] = useState(null); // 작업 종료 시간
+    const [showCompletionScreen, setShowCompletionScreen] = useState(false); // 작업 완료 화면 표시 여부
 
     const handleWorkToggle = () => {
         if (workStatus === '대기중') {
@@ -20,7 +24,14 @@ const WorkerMain = ({ onLogout }) => {
     };
 
     const handleCompleteWork = () => {
+        setWorkEndTime(new Date());
+        setShowCompletionScreen(true);
         setWorkStatus('완료');
+    };
+
+    const handleBackToWork = () => {
+        setShowCompletionScreen(false);
+        setWorkStatus('작업중');
     };
 
     // 로컬 스토리지에서 작업 목록 불러오기
@@ -87,13 +98,16 @@ const WorkerMain = ({ onLogout }) => {
         setActiveTaskId(taskId);
         setCurrentTask(taskContent);
         setWorkStatus('작업중');
+        if (!workStartTime) {
+            setWorkStartTime(new Date());
+        }
     };
 
     const handleEditTask = (taskId, newContent) => {
         setTaskList(prev => prev.map(task => 
             task.id === taskId ? { ...task, content: newContent } : task
         ));
-        setEditingTask(null);
+        // setEditingTask(null); // 이 줄을 제거하여 focus 유지
     };
 
     const handleDeleteTask = (taskId) => {
@@ -177,7 +191,7 @@ const WorkerMain = ({ onLogout }) => {
                     </p>
                 </div>
 
-                {/* 현재 작업 정보 */}
+                {/* 현재 작업 정보 또는 작업 완료 화면 */}
                 <div style={{
                     backgroundColor: 'white',
                     padding: '20px',
@@ -185,34 +199,97 @@ const WorkerMain = ({ onLogout }) => {
                     marginBottom: '20px',
                     boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
                 }}>
-                    <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', color: '#333' }}>
-                        현재 작업
-                    </h3>
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: '10px'
-                    }}>
-                        <span style={{ fontSize: '14px', color: '#666' }}>작업명:</span>
-                        <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
-                            {currentTask}
-                        </span>
-                    </div>
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                    }}>
-                        <span style={{ fontSize: '14px', color: '#666' }}>상태:</span>
-                        <span style={{
-                            fontSize: '14px',
-                            fontWeight: 'bold',
-                            color: getStatusColor()
-                        }}>
-                            {workStatus}
-                        </span>
-                    </div>
+                    {showCompletionScreen ? (
+                        <>
+                            <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', color: '#333' }}>
+                                작업 완료
+                            </h3>
+                            <div style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '10px'
+                            }}>
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
+                                }}>
+                                    <span style={{ fontSize: '14px', color: '#666' }}>작업 시작 시간:</span>
+                                    <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                                        {workStartTime ? workStartTime.toLocaleString() : '-'}
+                                    </span>
+                                </div>
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
+                                }}>
+                                    <span style={{ fontSize: '14px', color: '#666' }}>작업 종료 시간:</span>
+                                    <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                                        {workEndTime ? workEndTime.toLocaleString() : '-'}
+                                    </span>
+                                </div>
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
+                                }}>
+                                    <span style={{ fontSize: '14px', color: '#666' }}>달성률:</span>
+                                    <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#28a745' }}>
+                                        {taskList.length > 0 ? Math.round((completedTasks.length / taskList.length) * 100) : 0}%
+                                    </span>
+                                </div>
+                            </div>
+                            <button
+                                onClick={handleBackToWork}
+                                style={{
+                                    width: '100%',
+                                    padding: '12px',
+                                    backgroundColor: '#6c757d',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    fontSize: '14px',
+                                    fontWeight: 'bold',
+                                    cursor: 'pointer',
+                                    marginTop: '15px'
+                                }}
+                            >
+                                작업 계속하기
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', color: '#333' }}>
+                                현재 작업
+                            </h3>
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                marginBottom: '10px'
+                            }}>
+                                <span style={{ fontSize: '14px', color: '#666' }}>작업명:</span>
+                                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                                    {currentTask}
+                                </span>
+                            </div>
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center'
+                            }}>
+                                <span style={{ fontSize: '14px', color: '#666' }}>상태:</span>
+                                <span style={{
+                                    fontSize: '14px',
+                                    fontWeight: 'bold',
+                                    color: getStatusColor()
+                                }}>
+                                    {workStatus}
+                                </span>
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {/* 작업 제어 버튼 */}
@@ -252,7 +329,7 @@ const WorkerMain = ({ onLogout }) => {
                             cursor: completedTasks.length === taskList.length && taskList.length > 0 ? 'pointer' : 'not-allowed'
                         }}
                     >
-                        작업 완료
+                        작업 종료
                     </button>
                 </div>
 
@@ -272,27 +349,6 @@ const WorkerMain = ({ onLogout }) => {
                         <h3 style={{ margin: 0, fontSize: '16px', color: '#333' }}>
                             작업 목록
                         </h3>
-                        <button
-                            onClick={handleAddTask}
-                            style={{
-                                width: '32px',
-                                height: '32px',
-                                backgroundColor: '#28a745',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '50%',
-                                fontSize: '18px',
-                                fontWeight: 'bold',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                            }}
-                            title="새 작업 추가"
-                        >
-                            +
-                        </button>
                     </div>
                     <div style={{
                         display: 'flex',
@@ -323,23 +379,51 @@ const WorkerMain = ({ onLogout }) => {
                                         {task.number}
                                     </span>
                                     {editingTask === task.id ? (
-                                        <input
-                                            type="text"
-                                            value={task.content}
-                                            onChange={(e) => handleEditTask(task.id, e.target.value)}
-                                            onBlur={() => setEditingTask(null)}
-                                            onKeyPress={(e) => e.key === 'Enter' && setEditingTask(null)}
-                                            style={{
-                                                border: 'none',
-                                                outline: 'none',
-                                                fontSize: '14px',
-                                                color: '#333',
-                                                flex: 1,
-                                                textDecoration: completedTasks.includes(task.id) ? 'line-through' : 'none',
-                                                color: completedTasks.includes(task.id) ? '#6c757d' : '#333'
-                                            }}
-                                            autoFocus
-                                        />
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1 }}>
+                                            <input
+                                                type="text"
+                                                value={task.content}
+                                                onChange={(e) => handleEditTask(task.id, e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        setEditingTask(null);
+                                                    } else if (e.key === 'Escape') {
+                                                        setEditingTask(null);
+                                                    }
+                                                }}
+                                                onCompositionStart={() => setIsComposing(true)}
+                                                onCompositionEnd={() => setIsComposing(false)}
+                                                style={{
+                                                    border: 'none',
+                                                    outline: 'none',
+                                                    fontSize: '14px',
+                                                    color: '#333',
+                                                    flex: 1,
+                                                    textDecoration: completedTasks.includes(task.id) ? 'line-through' : 'none',
+                                                    color: completedTasks.includes(task.id) ? '#6c757d' : '#333'
+                                                }}
+                                                autoFocus
+                                            />
+                                            <button
+                                                onClick={() => setEditingTask(null)}
+                                                style={{
+                                                    width: '20px',
+                                                    height: '20px',
+                                                    backgroundColor: '#28a745',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    borderRadius: '50%',
+                                                    fontSize: '12px',
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}
+                                                title="편집 완료"
+                                            >
+                                                ✓
+                                            </button>
+                                        </div>
                                     ) : (
                                         <span 
                                             style={{
@@ -422,6 +506,45 @@ const WorkerMain = ({ onLogout }) => {
                                 </div>
                             </div>
                         ))}
+                    </div>
+                    {/* 작업 추가 버튼 - 하단 중앙 */}
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        marginTop: '15px',
+                        paddingTop: '15px',
+                        borderTop: '1px solid #e1e5e9'
+                    }}>
+                        <button
+                            onClick={handleAddTask}
+                            style={{
+                                width: '40px',
+                                height: '40px',
+                                backgroundColor: '#28a745',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '50%',
+                                fontSize: '20px',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                                transition: 'all 0.3s ease'
+                            }}
+                            title="새 작업 추가"
+                            onMouseEnter={(e) => {
+                                e.target.style.transform = 'scale(1.1)';
+                                e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.target.style.transform = 'scale(1)';
+                                e.target.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+                            }}
+                        >
+                            +
+                        </button>
                     </div>
                 </div>
             </div>
