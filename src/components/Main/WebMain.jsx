@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import Layout from '../Layouts/Admin/Mobile/Layout';
+import Layout from '../Layouts/Admin/Layout';
 
 const WebMain = () => {
-    const [showModal, setShowModal] = useState(true);
     const [location, setLocation] = useState({ lat: null, lng: null });
-    const [isTracking, setIsTracking] = useState(false);
+    const [isTracking, setIsTracking] = useState(true);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [locationHistory, setLocationHistory] = useState([]);
     const [isHistoryVisible, setIsHistoryVisible] = useState(true);
@@ -81,19 +80,13 @@ const WebMain = () => {
         }
     }, [isTracking, currentIndex, dummyLocations.length]);
 
-    const handleConsent = () => {
-        setShowModal(false);
-        setIsTracking(true);
+    // 컴포넌트 마운트 시 추적 시작
+    useEffect(() => {
         setCurrentIndex(0);
         setLocationHistory([]);
         setPersonPosition({ x: 0, y: 0 }); // 사람 위치 초기화
         setMovementPath([]); // 이동 경로 초기화
-    };
-
-    const handleDecline = () => {
-        setShowModal(false);
-        setIsTracking(false);
-    };
+    }, []);
 
     // 지도 이동 함수들
     const moveMapLeft = () => {
@@ -498,66 +491,7 @@ const WebMain = () => {
                 )}
             </div>
 
-            {/* 위치 추적 동의 모달 */}
-            {showModal && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    zIndex: 1000
-                }}>
-                    <div style={{
-                        backgroundColor: 'white',
-                        padding: '20px',
-                        borderRadius: '10px',
-                        maxWidth: '300px',
-                        textAlign: 'center',
-                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-                    }}>
-                        <h3>위치 추적 동의</h3>
-                        <p>실시간 위치 추적에 동의하십니까?</p>
-                        <div style={{
-                            display: 'flex',
-                            gap: '10px',
-                            justifyContent: 'center',
-                            marginTop: '20px'
-                        }}>
-                            <button
-                                onClick={handleConsent}
-                                style={{
-                                    padding: '10px 20px',
-                                    backgroundColor: '#007bff',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '5px',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                확인
-                            </button>
-                            <button
-                                onClick={handleDecline}
-                                style={{
-                                    padding: '10px 20px',
-                                    backgroundColor: '#6c757d',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '5px',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                거부
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+
         </Layout>
     );
 };
