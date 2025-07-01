@@ -25,7 +25,7 @@ const Header = ({ onLogout }) => {
                 padding: '0 15px'
             }}>
                 <div style={{
-                    fontSize: '16px',
+                    fontSize: '14px',
                     fontWeight: 'bold',
                     color: '#333'
                 }}>
@@ -40,13 +40,13 @@ const Header = ({ onLogout }) => {
                     <button
                         onClick={handleSettings}
                         style={{
-                            width: '32px',
-                            height: '32px',
+                            width: '24px',
+                            height: '24px',
                             backgroundColor: '#6c757d',
                             color: 'white',
                             border: 'none',
                             borderRadius: '50%',
-                            fontSize: '16px',
+                            fontSize: '12px',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
@@ -54,19 +54,19 @@ const Header = ({ onLogout }) => {
                         }}
                         title="설정"
                     >
-                        <FiSettings size={16} />
+                        <FiSettings size={12} />
                     </button>
                     
                     <button
                         onClick={handleLogout}
                         style={{
-                            width: '32px',
-                            height: '32px',
+                            width: '24px',
+                            height: '24px',
                             backgroundColor: '#dc3545',
                             color: 'white',
                             border: 'none',
                             borderRadius: '50%',
-                            fontSize: '16px',
+                            fontSize: '12px',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
@@ -74,7 +74,7 @@ const Header = ({ onLogout }) => {
                         }}
                         title="로그아웃"
                     >
-                        <FiLogOut size={16} />
+                        <FiLogOut size={12} />
                     </button>
                 </div>
             </div>

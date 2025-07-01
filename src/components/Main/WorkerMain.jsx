@@ -182,13 +182,16 @@ const WorkerMain = ({ onLogout }) => {
                     color: 'white',
                     padding: '15px',
                     borderRadius: '10px',
-                    marginBottom: '20px',
-                    textAlign: 'center'
+                    marginBottom: '10px',
+                    textAlign: 'center',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
                 }}>
                     <h2 style={{ margin: 0, fontSize: '18px' }}>작업자 화면</h2>
-                    <p style={{ margin: '5px 0 0 0', fontSize: '14px', opacity: 0.9 }}>
-                        현재 작업 상태 관리
-                    </p>
+                    <div style={{ margin: '5px 0 0 0', fontSize: '14px', opacity: 0.9 }}>
+                        서버연결됨
+                    </div>
                 </div>
 
                 {/* 현재 작업 정보 또는 작업 완료 화면 */}
