@@ -8,11 +8,11 @@
 
 body{
     max-width:350px;
-
+    background: #E0E0E0;
 }
 .login-container {
     min-height: 100vh;
-    /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+    
     display: flex;
     align-items: center;
     justify-content: center;
@@ -21,14 +21,13 @@ body{
 }
 
 .login-card {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    /* border-radius: 20px; */
+    background: white;
     padding: 30px 25px;
     width: 100%;
     max-width: 400px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    /* box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); */
+    border: 1px solid #e1e5e9;
+    border-radius: 5px;
 }
 
 /* 로고 영역 */
@@ -59,14 +58,14 @@ body{
 .app-title {
     font-size: 28px;
     font-weight: 700;
-    color: #333;
+    color: #1a1a1a;
     margin-bottom: 5px;
     letter-spacing: 2px;
 }
 
 .app-subtitle {
     font-size: 16px;
-    color: #666;
+    color: #4a4a4a;
     font-weight: 500;
 }
 
@@ -91,7 +90,7 @@ body{
     border: 2px solid #e1e5e9;
     border-radius: 12px;
     font-size: 16px;
-    background: white;
+    /* background: white; */
     transition: all 0.3s ease;
     outline: none;
 }
@@ -102,14 +101,14 @@ body{
 }
 
 .login-input::placeholder {
-    color: #999;
+    /* color: #999; */
 }
 
 .input-icon {
     position: absolute;
     right: 15px;
     font-size: 18px;
-    color: #999;
+    /* color: #999; */
     pointer-events: none;
 }
 
@@ -147,7 +146,7 @@ body{
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #666;
+    color: #4a4a4a;
     cursor: pointer;
 }
 
@@ -172,10 +171,10 @@ body{
     width: 100%;
     padding: 15px;
     /* background: linear-gradient(135deg, #667eea, #764ba2); */
-    background-color: royalblue;
+    background-color: #1E88E5;
     color: white;
     border: none;
-    border-radius: 12px;
+    /* border-radius: 12px; */
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
@@ -200,7 +199,7 @@ body{
 }
 
 .signup-section p {
-    color: #666;
+    color: #4a4a4a;
     margin-bottom: 8px;
     font-size: 14px;
 }
@@ -241,9 +240,9 @@ body{
 }
 
 .divider span {
-    background: rgba(255, 255, 255, 0.95);
+    background: white;
     padding: 0 15px;
-    color: #666;
+    color: #4a4a4a;
     font-size: 14px;
 }
 
@@ -258,7 +257,7 @@ body{
     border: 2px solid #e1e5e9;
     border-radius: 12px;
     background: white;
-    color: #333;
+    color: #1a1a1a;
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
@@ -331,22 +330,22 @@ body{
 /* 다크 모드 지원 */
 @media (prefers-color-scheme: dark) {
     .login-card {
-        background: rgba(30, 30, 30, 0.95);
-        border-color: rgba(255, 255, 255, 0.1);
+        /* background: rgba(30, 30, 30, 0.95); */
+        /* border-color: rgba(255, 255, 255, 0.1); */
     }
     
     .app-title {
-        color: #fff;
+        /* color: #fff; */
     }
     
     .app-subtitle {
-        color: #ccc;
+        /* color: #ccc; */
     }
     
     .login-input {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.2);
-        color: #fff;
+        /* background: rgba(255, 255, 255, 0.1); */
+        /* border-color: rgba(255, 255, 255, 0.2); */
+        /* color: #fff; */
     }
     
     .login-input::placeholder {

@@ -29,7 +29,7 @@ const Header = ({ onLogout }) => {
                     fontWeight: 'bold',
                     color: '#333'
                 }}>
-                    -
+                    작업자 님 환영합니다.
                 </div>
                 
                 <div style={{

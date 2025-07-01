@@ -1,7 +1,8 @@
-body{
-    width:380px;
-    margin : 0 auto;
+body {
+    width: 380px;
+    margin: 0 auto;
 }
+
 .layoutWrapper {
     display: flex;
     flex-direction: column;
@@ -9,45 +10,31 @@ body{
     font-family: sans-serif;
 }
 
-/* 공통 스타일 */
+
+
+
+
 .header {
+    padding: 5px 0;
     background-color: #f0f0f0;
+
+    text-align: center;
+    font-size: 10px;
 }
+
 
 .main {
     flex: 1;
-    padding: 1rem;
-    background: white;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+   
+    /* 아래에서 예시로 수정 */
 }
 
 .footer {
     background-color: #f0f0f0;
     padding: 1rem;
     text-align: center;
-    
-}
-
-/* === 모바일 전용 스타일 === */
-@media (max-width: 768px) {
-    .header {
-        padding : 5px 0;
-        
-        background-color: #e0e0e0;
-        text-align: center;
-        font-size: 10px;
-    }
-
-    .main {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        position: relative;
-        height: 50vh;
-        /* 아래에서 예시로 수정 */
-    }
-
 
 }
-
-
-

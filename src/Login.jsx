@@ -31,8 +31,11 @@ const Login = ({ onLogin }) => {
                     <div className="logo-circle">
                         <span className="logo-text">R</span>
                     </div>
-                    <h1 className="app-title">TITLE</h1>
-                    <p className="app-subtitle">- SUB TITLE - </p>
+                    <h1 className="app-title"> 
+                        {/* <span> 여기 아이콘 </span> */}
+                          RAILWAY
+                    </h1>
+                    <p className="app-subtitle">- Sub Title - </p>
                 </div>
 
                 {/* 로그인 폼 */}
