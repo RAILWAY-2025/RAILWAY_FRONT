@@ -312,7 +312,8 @@ const MobileMain = () => {
                     padding: '5px 10px',
                     borderRadius: '5px',
                     fontSize: '12px',
-                    zIndex: 1002
+                    zIndex: 1002,
+                    transform: `translate(${mapOffset.x}px, ${mapOffset.y}px)`
                 }}>
                     확대: {Math.round(mapZoom * 100)}%
                 </div>
