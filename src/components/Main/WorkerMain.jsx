@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../Layouts/Woker/Layout';
 
 const WorkerMain = ({ onLogout }) => {
-    const [currentTask, setCurrentTask] = useState('작업 1');
+    const [currentTask, setCurrentTask] = useState('');
     const [workStatus, setWorkStatus] = useState('대기중'); // '대기중', '작업중', '작업일시중지'
     const [completedTasks, setCompletedTasks] = useState([]); // 완료된 작업 목록
-    const [taskList, setTaskList] = useState(['작업 1', '작업 2', '작업 3', '작업 4']); // 동적 작업 목록
+    const [taskList, setTaskList] = useState([]); // 동적 작업 목록
+    const [editingTask, setEditingTask] = useState(null); // 수정 중인 작업 ID
+    const [activeTaskId, setActiveTaskId] = useState(null); // 현재 활성화된 작업 ID
 
     const handleWorkToggle = () => {
         if (workStatus === '대기중') {
@@ -21,29 +23,109 @@ const WorkerMain = ({ onLogout }) => {
         setWorkStatus('완료');
     };
 
-    const handleTaskComplete = (taskName) => {
+    // 로컬 스토리지에서 작업 목록 불러오기
+    useEffect(() => {
+        const savedTasks = localStorage.getItem('workerTasks');
+        if (savedTasks) {
+            const parsedTasks = JSON.parse(savedTasks);
+            setTaskList(parsedTasks);
+            // 첫 번째 작업을 현재 작업으로 설정
+            if (parsedTasks.length > 0) {
+                setCurrentTask(parsedTasks[0].content);
+            }
+        }
+    }, []);
+
+    // 작업 목록이 변경될 때마다 로컬 스토리지에 저장
+    useEffect(() => {
+        localStorage.setItem('workerTasks', JSON.stringify(taskList));
+    }, [taskList]);
+
+    const handleTaskComplete = (taskId) => {
         let newCompletedTasks;
-        if (completedTasks.includes(taskName)) {
-            newCompletedTasks = completedTasks.filter(task => task !== taskName);
+        if (completedTasks.includes(taskId)) {
+            newCompletedTasks = completedTasks.filter(id => id !== taskId);
         } else {
-            newCompletedTasks = [...completedTasks, taskName];
+            newCompletedTasks = [...completedTasks, taskId];
         }
         
         setCompletedTasks(newCompletedTasks);
         
-        // 모든 작업이 완료되면 작업 상태를 '완료'로 변경
-        if (newCompletedTasks.length === taskList.length) {
+        // 모든 작업이 체크되어야만 완료 상태로 변경
+        if (newCompletedTasks.length === taskList.length && taskList.length > 0) {
             setWorkStatus('완료');
-        } else if (workStatus === '완료') {
-            // 완료 상태에서 하나라도 체크가 해제되면 '작업중'으로 변경
-            setWorkStatus('작업중');
+        } else {
+            // 모든 작업이 체크되지 않았으면 완료 상태 해제
+            if (workStatus === '완료') {
+                setWorkStatus('작업중');
+            }
         }
     };
 
     const handleAddTask = () => {
         const newTaskNumber = taskList.length + 1;
-        const newTask = `작업 ${newTaskNumber}`;
+        const newTask = {
+            id: Date.now(),
+            number: newTaskNumber,
+            content: `작업 ${newTaskNumber}`,
+            completed: false
+        };
         setTaskList(prev => [...prev, newTask]);
+        
+        // 첫 번째 작업이면 현재 작업으로 설정
+        if (taskList.length === 0) {
+            setCurrentTask(newTask.content);
+        }
+        
+        // 완료 상태에서 새 작업이 추가되면 작업중 상태로 변경
+        if (workStatus === '완료') {
+            setWorkStatus('작업중');
+        }
+    };
+
+    const handleStartTask = (taskId, taskContent) => {
+        setActiveTaskId(taskId);
+        setCurrentTask(taskContent);
+        setWorkStatus('작업중');
+    };
+
+    const handleEditTask = (taskId, newContent) => {
+        setTaskList(prev => prev.map(task => 
+            task.id === taskId ? { ...task, content: newContent } : task
+        ));
+        setEditingTask(null);
+    };
+
+    const handleDeleteTask = (taskId) => {
+        setTaskList(prev => prev.filter(task => task.id !== taskId));
+        setCompletedTasks(prev => prev.filter(id => id !== taskId));
+        
+        // 삭제된 작업이 현재 작업이면 첫 번째 작업으로 변경
+        const deletedTask = taskList.find(task => task.id === taskId);
+        if (deletedTask && deletedTask.content === currentTask) {
+            const remainingTasks = taskList.filter(task => task.id !== taskId);
+            if (remainingTasks.length > 0) {
+                setCurrentTask(remainingTasks[0].content);
+            } else {
+                setCurrentTask('');
+            }
+        }
+        
+        // 삭제된 작업이 활성화된 작업이면 활성화 상태 해제
+        if (activeTaskId === taskId) {
+            setActiveTaskId(null);
+            setWorkStatus('대기중');
+        }
+        
+        // 작업 삭제 후 완료 상태 재확인
+        const remainingCompletedTasks = completedTasks.filter(id => id !== taskId);
+        const remainingTaskList = taskList.filter(task => task.id !== taskId);
+        
+        if (remainingCompletedTasks.length === remainingTaskList.length && remainingTaskList.length > 0) {
+            setWorkStatus('완료');
+        } else {
+            setWorkStatus('작업중');
+        }
     };
 
     // 버튼 텍스트와 스타일 결정
@@ -157,17 +239,17 @@ const WorkerMain = ({ onLogout }) => {
                     </button>
                     <button
                         onClick={handleCompleteWork}
-                        disabled={completedTasks.length < 4}
+                        disabled={completedTasks.length < taskList.length || taskList.length === 0}
                         style={{
                             flex: 1,
                             padding: '15px',
-                            backgroundColor: completedTasks.length === 4 ? '#007bff' : '#ccc',
+                            backgroundColor: completedTasks.length === taskList.length && taskList.length > 0 ? '#007bff' : '#ccc',
                             color: 'white',
                             border: 'none',
                             borderRadius: '8px',
                             fontSize: '14px',
                             fontWeight: 'bold',
-                            cursor: completedTasks.length === 4 ? 'pointer' : 'not-allowed'
+                            cursor: completedTasks.length === taskList.length && taskList.length > 0 ? 'pointer' : 'not-allowed'
                         }}
                     >
                         작업 완료
@@ -217,14 +299,14 @@ const WorkerMain = ({ onLogout }) => {
                         flexDirection: 'column',
                         gap: '10px'
                     }}>
-                        {taskList.map((task, index) => (
+                        {taskList.map((task) => (
                             <div
-                                key={index}
+                                key={task.id}
                                 style={{
                                     padding: '12px',
-                                    backgroundColor: task === currentTask ? '#e3f2fd' : '#f8f9fa',
+                                    backgroundColor: task.content === currentTask ? '#e3f2fd' : '#f8f9fa',
                                     borderRadius: '6px',
-                                    border: task === currentTask ? '2px solid #007bff' : '1px solid #dee2e6',
+                                    border: task.content === currentTask ? '2px solid #007bff' : '1px solid #dee2e6',
                                     fontSize: '14px',
                                     color: '#333',
                                     display: 'flex',
@@ -232,31 +314,112 @@ const WorkerMain = ({ onLogout }) => {
                                     alignItems: 'center'
                                 }}
                             >
-                                <span style={{
-                                    textDecoration: completedTasks.includes(task) ? 'line-through' : 'none',
-                                    color: completedTasks.includes(task) ? '#6c757d' : '#333'
-                                }}>
-                                    {task}
-                                </span>
-                                <button
-                                    onClick={() => handleTaskComplete(task)}
-                                    style={{
-                                        width: '24px',
-                                        height: '24px',
-                                        borderRadius: '50%',
-                                        border: '2px solid #007bff',
-                                        backgroundColor: completedTasks.includes(task) ? '#007bff' : 'white',
-                                        color: 'white',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        cursor: 'pointer',
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+                                    <span style={{
                                         fontSize: '12px',
-                                        fontWeight: 'bold'
-                                    }}
-                                >
-                                    {completedTasks.includes(task) ? '✓' : ''}
-                                </button>
+                                        color: '#666',
+                                        minWidth: '20px'
+                                    }}>
+                                        {task.number}
+                                    </span>
+                                    {editingTask === task.id ? (
+                                        <input
+                                            type="text"
+                                            value={task.content}
+                                            onChange={(e) => handleEditTask(task.id, e.target.value)}
+                                            onBlur={() => setEditingTask(null)}
+                                            onKeyPress={(e) => e.key === 'Enter' && setEditingTask(null)}
+                                            style={{
+                                                border: 'none',
+                                                outline: 'none',
+                                                fontSize: '14px',
+                                                color: '#333',
+                                                flex: 1,
+                                                textDecoration: completedTasks.includes(task.id) ? 'line-through' : 'none',
+                                                color: completedTasks.includes(task.id) ? '#6c757d' : '#333'
+                                            }}
+                                            autoFocus
+                                        />
+                                    ) : (
+                                        <span 
+                                            style={{
+                                                textDecoration: completedTasks.includes(task.id) ? 'line-through' : 'none',
+                                                color: completedTasks.includes(task.id) ? '#6c757d' : '#333',
+                                                flex: 1,
+                                                cursor: 'text'
+                                            }}
+                                            onClick={() => setEditingTask(task.id)}
+                                        >
+                                            {task.content}
+                                        </span>
+                                    )}
+                                </div>
+                                <div style={{ 
+                                    display: editingTask === task.id ? 'none' : 'flex', 
+                                    alignItems: 'center', 
+                                    gap: '4px' 
+                                }}>
+                                    <button
+                                        onClick={() => handleStartTask(task.id, task.content)}
+                                        disabled={activeTaskId === task.id}
+                                        style={{
+                                            width: '24px',
+                                            height: '24px',
+                                            backgroundColor: activeTaskId === task.id ? '#28a745' : '#6c757d',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '50%',
+                                            fontSize: '12px',
+                                            cursor: activeTaskId === task.id ? 'not-allowed' : 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontWeight: 'bold',
+                                            opacity: activeTaskId === task.id ? 0.7 : 1
+                                        }}
+                                        title={activeTaskId === task.id ? "작업 진행중" : "작업 시작"}
+                                    >
+                                        {activeTaskId === task.id ? '●' : '▶'}
+                                    </button>
+                                    <button
+                                        onClick={() => handleTaskComplete(task.id)}
+                                        style={{
+                                            width: '24px',
+                                            height: '24px',
+                                            borderRadius: '50%',
+                                            border: '2px solid #007bff',
+                                            backgroundColor: completedTasks.includes(task.id) ? '#007bff' : 'white',
+                                            color: 'white',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            cursor: 'pointer',
+                                            fontSize: '12px',
+                                            fontWeight: 'bold'
+                                        }}
+                                    >
+                                        {completedTasks.includes(task.id) ? '✓' : ''}
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteTask(task.id)}
+                                        style={{
+                                            width: '20px',
+                                            height: '20px',
+                                            backgroundColor: '#dc3545',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '50%',
+                                            fontSize: '12px',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}
+                                        title="삭제"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
