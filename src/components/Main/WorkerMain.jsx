@@ -24,14 +24,34 @@ const WorkerMain = ({ onLogout }) => {
     };
 
     const handleCompleteWork = () => {
+        // 모든 작업이 체크되지 않은 경우 경고 메시지 표시
+        if (completedTasks.length < taskList.length) {
+            const confirmEnd = window.confirm('아직 미달성된 작업목록이있습니다. 종료하시겠습니까?');
+            if (!confirmEnd) {
+                return; // 취소 시 함수 종료
+            }
+        }
+        
         setWorkEndTime(new Date());
         setShowCompletionScreen(true);
         setWorkStatus('완료');
     };
 
     const handleBackToWork = () => {
-        setShowCompletionScreen(false);
-        setWorkStatus('작업중');
+        // 현재 날짜와 작업 시작 날짜 비교
+        const today = new Date().toDateString();
+        const startDate = workStartTime ? workStartTime.toDateString() : null;
+        
+        if (startDate === today) {
+            const confirmContinue = window.confirm('다시 작업하시겠습니까?');
+            if (!confirmContinue) {
+                return; // 취소 시 함수 종료
+            }
+            setShowCompletionScreen(false);
+            setWorkStatus('작업중');
+        } else {
+            alert('지난 작업을 수정 할 수 없습니다');
+        }
     };
 
     // 로컬 스토리지에서 작업 목록 불러오기
@@ -62,14 +82,9 @@ const WorkerMain = ({ onLogout }) => {
         
         setCompletedTasks(newCompletedTasks);
         
-        // 모든 작업이 체크되어야만 완료 상태로 변경
-        if (newCompletedTasks.length === taskList.length && taskList.length > 0) {
-            setWorkStatus('완료');
-        } else {
-            // 모든 작업이 체크되지 않았으면 완료 상태 해제
-            if (workStatus === '완료') {
-                setWorkStatus('작업중');
-            }
+        // 모든 작업이 체크되지 않았으면 완료 상태 해제
+        if (newCompletedTasks.length < taskList.length && workStatus === '완료') {
+            setWorkStatus('작업중');
         }
     };
 
@@ -319,17 +334,17 @@ const WorkerMain = ({ onLogout }) => {
                     </button>
                     <button
                         onClick={handleCompleteWork}
-                        disabled={completedTasks.length < taskList.length || taskList.length === 0}
+                        disabled={taskList.length === 0 || showCompletionScreen}
                         style={{
                             flex: 1,
                             padding: '15px',
-                            backgroundColor: completedTasks.length === taskList.length && taskList.length > 0 ? '#007bff' : '#ccc',
+                            backgroundColor: (taskList.length > 0 && !showCompletionScreen) ? '#007bff' : '#ccc',
                             color: 'white',
                             border: 'none',
                             borderRadius: '8px',
                             fontSize: '14px',
                             fontWeight: 'bold',
-                            cursor: completedTasks.length === taskList.length && taskList.length > 0 ? 'pointer' : 'not-allowed'
+                            cursor: (taskList.length > 0 && !showCompletionScreen) ? 'pointer' : 'not-allowed'
                         }}
                     >
                         작업 종료
@@ -433,9 +448,9 @@ const WorkerMain = ({ onLogout }) => {
                                                 textDecoration: completedTasks.includes(task.id) ? 'line-through' : 'none',
                                                 color: completedTasks.includes(task.id) ? '#6c757d' : '#333',
                                                 flex: 1,
-                                                cursor: 'text'
+                                                cursor: showCompletionScreen ? 'default' : 'text'
                                             }}
-                                            onClick={() => setEditingTask(task.id)}
+                                            onClick={() => !showCompletionScreen && setEditingTask(task.id)}
                                         >
                                             {task.content}
                                         </span>
@@ -448,7 +463,7 @@ const WorkerMain = ({ onLogout }) => {
                                 }}>
                                     <button
                                         onClick={() => handleStartTask(task.id, task.content)}
-                                        disabled={activeTaskId === task.id}
+                                        disabled={activeTaskId === task.id || showCompletionScreen}
                                         style={{
                                             width: '24px',
                                             height: '24px',
@@ -457,12 +472,12 @@ const WorkerMain = ({ onLogout }) => {
                                             border: 'none',
                                             borderRadius: '50%',
                                             fontSize: '12px',
-                                            cursor: activeTaskId === task.id ? 'not-allowed' : 'pointer',
+                                            cursor: (activeTaskId === task.id || showCompletionScreen) ? 'not-allowed' : 'pointer',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                             fontWeight: 'bold',
-                                            opacity: activeTaskId === task.id ? 0.7 : 1
+                                            opacity: (activeTaskId === task.id || showCompletionScreen) ? 0.7 : 1
                                         }}
                                         title={activeTaskId === task.id ? "작업 진행중" : "작업 시작"}
                                     >
@@ -470,6 +485,7 @@ const WorkerMain = ({ onLogout }) => {
                                     </button>
                                     <button
                                         onClick={() => handleTaskComplete(task.id)}
+                                        disabled={showCompletionScreen}
                                         style={{
                                             width: '24px',
                                             height: '24px',
@@ -480,15 +496,17 @@ const WorkerMain = ({ onLogout }) => {
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            cursor: 'pointer',
+                                            cursor: showCompletionScreen ? 'not-allowed' : 'pointer',
                                             fontSize: '12px',
-                                            fontWeight: 'bold'
+                                            fontWeight: 'bold',
+                                            opacity: showCompletionScreen ? 0.7 : 1
                                         }}
                                     >
                                         {completedTasks.includes(task.id) ? '✓' : ''}
                                     </button>
                                     <button
                                         onClick={() => handleDeleteTask(task.id)}
+                                        disabled={showCompletionScreen}
                                         style={{
                                             width: '20px',
                                             height: '20px',
@@ -497,10 +515,11 @@ const WorkerMain = ({ onLogout }) => {
                                             border: 'none',
                                             borderRadius: '50%',
                                             fontSize: '12px',
-                                            cursor: 'pointer',
+                                            cursor: showCompletionScreen ? 'not-allowed' : 'pointer',
                                             display: 'flex',
                                             alignItems: 'center',
-                                            justifyContent: 'center'
+                                            justifyContent: 'center',
+                                            opacity: showCompletionScreen ? 0.7 : 1
                                         }}
                                         title="삭제"
                                     >
@@ -520,26 +539,30 @@ const WorkerMain = ({ onLogout }) => {
                     }}>
                         <button
                             onClick={handleAddTask}
+                            disabled={showCompletionScreen}
                             style={{
                                 width: '40px',
                                 height: '40px',
-                                backgroundColor: '#28a745',
+                                backgroundColor: showCompletionScreen ? '#ccc' : '#28a745',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '50%',
                                 fontSize: '20px',
                                 fontWeight: 'bold',
-                                cursor: 'pointer',
+                                cursor: showCompletionScreen ? 'not-allowed' : 'pointer',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                                transition: 'all 0.3s ease'
+                                transition: 'all 0.3s ease',
+                                opacity: showCompletionScreen ? 0.7 : 1
                             }}
                             title="새 작업 추가"
                             onMouseEnter={(e) => {
-                                e.target.style.transform = 'scale(1.1)';
-                                e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+                                if (!showCompletionScreen) {
+                                    e.target.style.transform = 'scale(1.1)';
+                                    e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+                                }
                             }}
                             onMouseLeave={(e) => {
                                 e.target.style.transform = 'scale(1)';
