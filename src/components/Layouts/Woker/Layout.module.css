@@ -12,7 +12,6 @@ body{
 /* 공통 스타일 */
 .header {
     background-color: #f0f0f0;
-    padding: 1rem;
 }
 
 .main {
@@ -25,14 +24,13 @@ body{
     background-color: #f0f0f0;
     padding: 1rem;
     text-align: center;
-
     
 }
 
 /* === 모바일 전용 스타일 === */
 @media (max-width: 768px) {
     .header {
-        height :50px;
+        padding : 5px 0;
         
         background-color: #e0e0e0;
         text-align: center;

@@ -20,11 +20,16 @@ function App() {
     }
   };
 
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUserType('');
+  };
+
   // 작업자 화면
   if (isLoggedIn && userType === 'worker') {
     return (
       <div className="App">
-        <WorkerMain />
+        <WorkerMain onLogout={handleLogout} />
       </div>
     );
   }
@@ -33,7 +38,7 @@ function App() {
   if (isLoggedIn && userType === 'admin') {
     return (
       <div className="App">
-        <MainSelector />
+        <MainSelector onLogout={handleLogout} />
       </div>
     );
   }
