@@ -260,7 +260,8 @@ const WebMain = () => {
                 style={{
                     backgroundImage: `url(${process.env.PUBLIC_URL}/images/maps/jinyung-map.png)`,
                     backgroundSize: `auto ${100 * mapZoom}%`,
-                    backgroundPosition: `${mapOffset.x}px ${mapOffset.y}px`,
+                    // backgroundPosition: `${mapOffset.x}px ${mapOffset.y}px`,
+                    backgroundPosition: 'center',
                     backgroundRepeat: 'no-repeat',
                     width: '100%',
                     height: '100vh',
@@ -268,7 +269,8 @@ const WebMain = () => {
                     overflow: 'hidden',
                     touchAction: 'none',
                     display: 'flex',
-                    flexDirection: 'column'
+                    flexDirection: 'column',
+                    
                 }}
             >
 
@@ -397,7 +399,9 @@ const WebMain = () => {
                 {/* <h6 style={{margin:0,textAlign:'left'}}>모바일 메인 화면</h6> */}
                 {isTracking ? (
                     <>
-                        <div
+                       
+                       
+                        {/* <div
                             style={{
                                 fontSize: '10px',
                                 display: 'flex',
@@ -413,8 +417,9 @@ const WebMain = () => {
                             <div>TIME: {new Date().toLocaleTimeString()}</div>
                             <div>LAT: {location.lat?.toFixed(6)}</div>
                             <div>LNG: {location.lng?.toFixed(6)}</div>
-                            {/* <p>현재 위치: {currentIndex} / {dummyLocations.length}</p> */}
-                        </div>
+                        </div> */}
+
+
 
                         <div
                             style={{

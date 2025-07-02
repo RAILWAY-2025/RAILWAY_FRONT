@@ -1,0 +1,88 @@
+{
+    "workers": [
+      {
+        "workerId": "W001",
+        "connectionStatus": "connected",
+        "currentTaskName": "안전장치 확인",
+        "workStatus": "작업중",
+        "taskList": [
+          {
+            "taskNumber": 1,
+            "taskName": "설비 점검",
+            "taskStatus": "completed"
+          },
+          {
+            "taskNumber": 2,
+            "taskName": "안전장치 확인", 
+            "taskStatus": "in_progress"
+          },
+          {
+            "taskNumber": 3,
+            "taskName": "품질검사",
+            "taskStatus": "pending"
+          }
+        ],
+        "workCompletion": {
+          "isCompleted": false,
+          "workStartTime": "2024-01-15T09:00:00Z",
+          "workEndTime": null,
+          "completionRate": 33
+        }
+      },
+      {
+        "workerId": "W002",
+        "connectionStatus": "connected",
+        "currentTaskName": null,
+        "workStatus": "대기중",
+        "taskList": [
+          {
+            "taskNumber": 1,
+            "taskName": "원자재 검수",
+            "taskStatus": "pending"
+          },
+          {
+            "taskNumber": 2,
+            "taskName": "포장 검사",
+            "taskStatus": "pending"
+          }
+        ],
+        "workCompletion": {
+          "isCompleted": false,
+          "workStartTime": null,
+          "workEndTime": null,
+          "completionRate": 0
+        }
+      },
+      {
+        "workerId": "W003",
+        "connectionStatus": "disconnected",
+        "currentTaskName": "최종 검수",
+        "workStatus": "완료",
+        "taskList": [
+          {
+            "taskNumber": 1,
+            "taskName": "초기 점검",
+            "taskStatus": "completed"
+          },
+          {
+            "taskNumber": 2,
+            "taskName": "최종 검수",
+            "taskStatus": "completed"
+          }
+        ],
+        "workCompletion": {
+          "isCompleted": true,
+          "workStartTime": "2024-01-15T08:00:00Z",
+          "workEndTime": "2024-01-15T12:00:00Z",
+          "completionRate": 100
+        }
+      }
+    ],
+    "systemInfo": {
+      "totalWorkers": 3,
+      "connectedWorkers": 2,
+      "activeWorkers": 1,
+      "completedWorkers": 1,
+      "lastUpdated": "2024-01-15T09:35:00Z"
+    }
+  }

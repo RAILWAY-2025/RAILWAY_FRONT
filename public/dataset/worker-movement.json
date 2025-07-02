@@ -1,0 +1,136 @@
+{
+    "workerMovements": [
+      {
+        "workerId": "W001",
+        "movementData": [
+          {
+            "timestamp": "2024-01-15T09:00:00Z",
+            "latitude": 35.123456,
+            "longitude": 128.789012,
+            "location": "공장 입구",
+            "activity": "작업 시작",
+            "taskNumber": 1
+          },
+          {
+            "timestamp": "2024-01-15T09:15:00Z", 
+            "latitude": 35.123500,
+            "longitude": 128.789100,
+            "location": "설비 구역 A",
+            "activity": "설비 점검 중",
+            "taskNumber": 1
+          },
+          {
+            "timestamp": "2024-01-15T09:30:00Z",
+            "latitude": 35.123600,
+            "longitude": 128.789200,
+            "location": "안전장치 구역",
+            "activity": "안전장치 확인 중",
+            "taskNumber": 2
+          },
+          {
+            "timestamp": "2024-01-15T09:45:00Z",
+            "latitude": 35.123700,
+            "longitude": 128.789300,
+            "location": "품질검사 구역",
+            "activity": "품질검사 대기",
+            "taskNumber": 3
+          }
+        ],
+        "movementSummary": {
+          "totalDistance": 150.5,
+          "totalTime": 2700,
+          "averageSpeed": 0.056,
+          "startLocation": "공장 입구",
+          "endLocation": "품질검사 구역"
+        }
+      },
+      {
+        "workerId": "W002",
+        "movementData": [
+          {
+            "timestamp": "2024-01-15T08:30:00Z",
+            "latitude": 35.124000,
+            "longitude": 128.790000,
+            "location": "공장 입구",
+            "activity": "출근",
+            "taskNumber": 1
+          },
+          {
+            "timestamp": "2024-01-15T08:45:00Z",
+            "latitude": 35.124100,
+            "longitude": 128.790100,
+            "location": "원자재 창고",
+            "activity": "원자재 검수 대기",
+            "taskNumber": 1
+          },
+          {
+            "timestamp": "2024-01-15T09:00:00Z",
+            "latitude": 35.124200,
+            "longitude": 128.790200,
+            "location": "포장 구역",
+            "activity": "포장 검사 대기",
+            "taskNumber": 2
+          }
+        ],
+        "movementSummary": {
+          "totalDistance": 45.2,
+          "totalTime": 900,
+          "averageSpeed": 0.050,
+          "startLocation": "공장 입구",
+          "endLocation": "포장 구역"
+        }
+      },
+      {
+        "workerId": "W003",
+        "movementData": [
+          {
+            "timestamp": "2024-01-15T08:00:00Z",
+            "latitude": 35.125000,
+            "longitude": 128.791000,
+            "location": "공장 입구",
+            "activity": "작업 시작",
+            "taskNumber": 1
+          },
+          {
+            "timestamp": "2024-01-15T08:30:00Z",
+            "latitude": 35.125100,
+            "longitude": 128.791100,
+            "location": "검사 구역 1",
+            "activity": "초기 점검 완료",
+            "taskNumber": 1
+          },
+          {
+            "timestamp": "2024-01-15T11:30:00Z",
+            "latitude": 35.125200,
+            "longitude": 128.791200,
+            "location": "검사 구역 2",
+            "activity": "최종 검수 완료",
+            "taskNumber": 2
+          },
+          {
+            "timestamp": "2024-01-15T12:00:00Z",
+            "latitude": 35.125000,
+            "longitude": 128.791000,
+            "location": "공장 입구",
+            "activity": "작업 종료",
+            "taskNumber": 2
+          }
+        ],
+        "movementSummary": {
+          "totalDistance": 200.8,
+          "totalTime": 14400,
+          "averageSpeed": 0.014,
+          "startLocation": "공장 입구",
+          "endLocation": "공장 입구"
+        }
+      }
+    ],
+    "movementAnalytics": {
+      "totalWorkers": 3,
+      "totalMovements": 10,
+      "averageDistancePerWorker": 132.2,
+      "averageTimePerWorker": 6000,
+      "mostActiveWorker": "W003",
+      "lastUpdated": "2024-01-15T12:00:00Z"
+    }
+  }

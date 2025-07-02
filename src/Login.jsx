@@ -31,11 +31,12 @@ const Login = ({ onLogin }) => {
                     <div className="logo-circle">
                         <span className="logo-text">R</span>
                     </div>
+                    <p className="app-subtitle" style={{textAlign:"right" ,fontSize:".7rem"}}>Saft City</p>
                     <h1 className="app-title"> 
                         {/* <span> 여기 아이콘 </span> */}
-                          RAILWAY
+                        철도작업알림 시스템
                     </h1>
-                    <p className="app-subtitle">- Sub Title - </p>
+                    
                 </div>
 
                 {/* 로그인 폼 */}
