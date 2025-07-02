@@ -3,10 +3,6 @@ import Layout from '../Layouts/Admin/Layout';
 import { getWorkerMovements, getAllWorkersInfo } from '../Api/workerApi';
 
 const WebMain = ({ onLogout }) => {
-    const [location, setLocation] = useState({ lat: null, lng: null });
-    const [isTracking, setIsTracking] = useState(true);
-    const [currentIndex, setCurrentIndex] = useState(0);
-
     const [mapOffset, setMapOffset] = useState({ x: 0, y: 0 }); // 지도 이동을 위한 오프셋
     const [mapZoom, setMapZoom] = useState(1); // 지도 확대/축소
     const [mapHistory, setMapHistory] = useState([]); // 지도 이동 히스토리
@@ -22,11 +18,6 @@ const WebMain = ({ onLogout }) => {
     // 이미지 원본 사이즈
     const imageSize = { width: 1920, height: 1080 };
 
-    // 사람 위치 점의 이동을 위한 상태
-    const [personPosition, setPersonPosition] = useState({ x: 0, y: 0 });
-    const [movementPath, setMovementPath] = useState([]); // 이동 경로 저장
-    const [movementDirection, setMovementDirection] = useState(0); // 이동 방향 (각도)
-
     // 작업자 위치 데이터 상태
     const [workerPositions, setWorkerPositions] = useState([]);
     
@@ -34,6 +25,9 @@ const WebMain = ({ onLogout }) => {
     const [showModal, setShowModal] = useState(false);
     const [selectedWorker, setSelectedWorker] = useState(null);
     const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
+
+    // 작업자 이동 상태
+    const [workerMovements, setWorkerMovements] = useState({});
 
     // 작업자 이동 데이터 가져오기
     useEffect(() => {
@@ -70,64 +64,188 @@ const WebMain = ({ onLogout }) => {
         fetchWorkerMovements();
     }, []);
 
-    // 100개의 더미 위치 데이터 생성 (서울 시청 주변을 중심으로 한 동선)
-    const dummyLocations = Array.from({ length: 100 }, (_, index) => {
-        const baseLat = 37.5665;
-        const baseLng = 126.9780;
-        // 원형 경로로 이동하는 것처럼 시뮬레이션
-        const angle = (index / 100) * 2 * Math.PI;
-        const radius = 0.01; // 약 1km 반경
+    // GPS 좌표를 화면 좌표로 변환하는 함수
+    const gpsToScreen = (lat, lng) => {
+        // 지도의 중심 GPS 좌표 (지도 이미지에 맞게 조정 필요)
+        const centerLat = 35.125000;
+        const centerLng = 128.791000;
+        
+        // 지도 이미지 크기 (픽셀)
+        const mapWidth = 1920;
+        const mapHeight = 1080;
+        
+        // GPS 좌표를 픽셀 좌표로 변환
+        const latDiff = lat - centerLat;
+        const lngDiff = lng - centerLng;
+        
+        // 1도당 픽셀 수 (실제 지도 스케일에 맞게 조정)
+        const pixelsPerLat = mapHeight / 0.01; // 0.01도 = 전체 지도 높이
+        const pixelsPerLng = mapWidth / 0.01;  // 0.01도 = 전체 지도 너비
+        
+        const x = (lngDiff * pixelsPerLng) * 0.1; // 스케일 조정
+        const y = -(latDiff * pixelsPerLat) * 0.1; // Y축 반전 및 스케일 조정
+        
+        return { x, y };
+    };
 
-        // 10초 단위로 시간 표시 (5초마다 업데이트하지만 10초 단위로 표시)
-        const currentTime = new Date();
-        const seconds = Math.floor(currentTime.getSeconds() / 10) * 10; // 10초 단위로 반올림
-        const adjustedTime = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate(),
-            currentTime.getHours(), currentTime.getMinutes(), seconds + (index * 5));
-
-        return {
-            id: index + 1,
-            lat: baseLat + radius * Math.cos(angle),
-            lng: baseLng + radius * Math.sin(angle),
-            timestamp: adjustedTime.toLocaleTimeString()
+    // 작업자 GPS 추적 애니메이션
+    useEffect(() => {
+        const intervals = {};
+        
+        workerPositions.forEach((worker, index) => {
+            const workerId = worker.workerId;
+            
+            // 연결 상태가 'disconnected'인 경우 움직이지 않음
+            if (worker.connectionStatus === 'disconnected') {
+                // 정지 상태로 초기 위치 설정
+                const basePositions = [
+                    { x: -200, y: -100 },  // W001 - 좌상단
+                    { x: 200, y: -100 },   // W002 - 우상단
+                    { x: 0, y: 150 },      // W003 - 하단 중앙
+                    { x: -200, y: 100 },   // W004 - 좌하단
+                    { x: 200, y: 100 },    // W005 - 우하단
+                    { x: 0, y: -150 }      // W006 - 상단 중앙
+                ];
+                
+                const basePos = basePositions[index] || { x: 0, y: 0 };
+                
+                setWorkerMovements(prev => ({
+                    ...prev,
+                    [workerId]: {
+                        x: basePos.x,
+                        y: basePos.y,
+                        direction: 0
+                    }
+                }));
+                return; // 연결이 끊어진 작업자는 움직이지 않음
+            }
+            
+            // 연결된 작업자만 움직임
+            const basePositions = [
+                { x: -200, y: -100 },  // W001 - 좌상단
+                { x: 200, y: -100 },   // W002 - 우상단
+                { x: 0, y: 150 },      // W003 - 하단 중앙
+                { x: -200, y: 100 },   // W004 - 좌하단
+                { x: 200, y: 100 },    // W005 - 우하단
+                { x: 0, y: -150 }      // W006 - 상단 중앙
+            ];
+            
+            const basePos = basePositions[index] || { x: 0, y: 0 };
+            
+            // 각 작업자별 다른 초기 방향 설정
+            const initialDirections = [45, 135, 225, 315, 90, 270]; // 각 작업자별 다른 시작 방향
+            
+            // 초기 위치 설정
+            setWorkerMovements(prev => ({
+                ...prev,
+                [workerId]: {
+                    x: basePos.x,
+                    y: basePos.y,
+                    direction: initialDirections[index] || 0
+                }
+            }));
+            
+            // 각 작업자별 다른 이동 패턴 설정 (작은 움직임)
+            const movementPatterns = [
+                // W001 - 작은 원형 이동
+                [
+                    { x: basePos.x, y: basePos.y },
+                    { x: basePos.x + 15, y: basePos.y - 10 },
+                    { x: basePos.x + 20, y: basePos.y + 5 },
+                    { x: basePos.x + 10, y: basePos.y + 15 },
+                    { x: basePos.x - 8, y: basePos.y + 12 },
+                    { x: basePos.x - 12, y: basePos.y - 3 },
+                    { x: basePos.x, y: basePos.y }
+                ],
+                // W002 - 작은 대각선 이동
+                [
+                    { x: basePos.x, y: basePos.y },
+                    { x: basePos.x - 12, y: basePos.y + 8 },
+                    { x: basePos.x - 18, y: basePos.y + 15 },
+                    { x: basePos.x - 12, y: basePos.y + 20 },
+                    { x: basePos.x, y: basePos.y + 15 },
+                    { x: basePos.x + 8, y: basePos.y + 8 },
+                    { x: basePos.x, y: basePos.y }
+                ],
+                // W003 - 작은 직선 왕복 이동
+                [
+                    { x: basePos.x, y: basePos.y },
+                    { x: basePos.x + 20, y: basePos.y },
+                    { x: basePos.x + 25, y: basePos.y },
+                    { x: basePos.x + 20, y: basePos.y },
+                    { x: basePos.x, y: basePos.y },
+                    { x: basePos.x - 10, y: basePos.y },
+                    { x: basePos.x, y: basePos.y }
+                ],
+                // W004 - 작은 지그재그 이동
+                [
+                    { x: basePos.x, y: basePos.y },
+                    { x: basePos.x + 10, y: basePos.y - 8 },
+                    { x: basePos.x + 18, y: basePos.y + 5 },
+                    { x: basePos.x + 10, y: basePos.y + 15 },
+                    { x: basePos.x, y: basePos.y + 10 },
+                    { x: basePos.x - 8, y: basePos.y - 5 },
+                    { x: basePos.x, y: basePos.y }
+                ],
+                // W005 - 작은 반시계방향 원형 이동
+                [
+                    { x: basePos.x, y: basePos.y },
+                    { x: basePos.x - 12, y: basePos.y - 8 },
+                    { x: basePos.x - 18, y: basePos.y + 5 },
+                    { x: basePos.x - 10, y: basePos.y + 15 },
+                    { x: basePos.x + 8, y: basePos.y + 12 },
+                    { x: basePos.x + 12, y: basePos.y - 3 },
+                    { x: basePos.x, y: basePos.y }
+                ],
+                // W006 - 작은 사각형 이동
+                [
+                    { x: basePos.x, y: basePos.y },
+                    { x: basePos.x + 15, y: basePos.y },
+                    { x: basePos.x + 15, y: basePos.y + 15 },
+                    { x: basePos.x, y: basePos.y + 15 },
+                    { x: basePos.x - 15, y: basePos.y + 15 },
+                    { x: basePos.x - 15, y: basePos.y },
+                    { x: basePos.x, y: basePos.y }
+                ]
+            ];
+            
+            const path = movementPatterns[index] || movementPatterns[0];
+            let currentIndex = 0;
+            
+            // 각 작업자별 다른 주기 설정 (7초대 2개, 10초대 2개, 12초대 1개)
+            const intervals = [7000, 7500, 10000, 10500, 12000, 8000];
+            const interval = intervals[index] || 7000;
+            
+            intervals[workerId] = setInterval(() => {
+                const nextIndex = (currentIndex + 1) % path.length;
+                const currentPos = path[currentIndex];
+                const nextPos = path[nextIndex];
+                
+                // 이동 방향 계산 (각도) - 현재 위치에서 다음 위치로의 방향
+                const direction = Math.atan2(
+                    nextPos.y - currentPos.y,
+                    nextPos.x - currentPos.x
+                ) * 180 / Math.PI + 90; // 90도 회전하여 화살표가 올바른 방향을 가리키도록
+                
+                setWorkerMovements(prev => ({
+                    ...prev,
+                    [workerId]: {
+                        x: currentPos.x,
+                        y: currentPos.y,
+                        direction: direction
+                    }
+                }));
+                
+                currentIndex = nextIndex;
+            }, interval);
+        });
+        
+        return () => {
+            Object.values(intervals).forEach(interval => clearInterval(interval));
         };
-    });
+    }, [workerPositions]);
 
-    useEffect(() => {
-        if (isTracking && currentIndex < dummyLocations.length) {
-            const timer = setTimeout(() => {
-                const currentLocation = dummyLocations[currentIndex];
-                setLocation({ lat: currentLocation.lat, lng: currentLocation.lng });
-                setCurrentIndex(prev => prev + 1);
-                
-                // 사람 위치 점 이동 (위치 기록 시마다)
-                const moveX = (Math.random() - 0.5) * 20; // -10 ~ +10px 랜덤 이동
-                const moveY = (Math.random() - 0.5) * 20; // -10 ~ +10px 랜덤 이동
-                
-                const newPosition = {
-                    x: personPosition.x + moveX,
-                    y: personPosition.y + moveY
-                };
-                
-                setPersonPosition(newPosition);
-                
-                // 이동 경로에 현재 위치 추가
-                setMovementPath(prev => [...prev, newPosition]);
-                
-                // 이동 방향 계산 (각도)
-                const angle = Math.atan2(moveY, moveX) * 180 / Math.PI;
-                setMovementDirection(angle);
-            }, 5000);
 
-            return () => clearTimeout(timer);
-        }
-    }, [isTracking, currentIndex, dummyLocations.length]);
-
-    // 컴포넌트 마운트 시 추적 시작
-    useEffect(() => {
-        setCurrentIndex(0);
-        setPersonPosition({ x: 0, y: 0 }); // 사람 위치 초기화
-        setMovementPath([]); // 이동 경로 초기화
-    }, []);
 
     // 지도 이동 함수들
     const moveMapLeft = () => {
@@ -354,69 +472,7 @@ const WebMain = ({ onLogout }) => {
                     확대: {Math.round(mapZoom * 100)}%
                 </div>
 
-                {/* 사람 위치 표시 점 */}
-                {isTracking && (
-                    <div style={{
-                        position: 'absolute',
-                        top: `calc(50% + ${personPosition.y + mapOffset.y}px)`,
-                        left: `calc(50% + ${personPosition.x + mapOffset.x}px)`,
-                        width: '10px',
-                        height: '10px',
-                        backgroundColor: 'red',
-                        borderRadius: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        zIndex: 1001,
-                        boxShadow: '0 0 8px rgba(255, 0, 0, 0.8), 0 0 16px rgba(255, 0, 0, 0.4)',
-                        animation: 'pulse 2s infinite',
-                        border: '2px solid rgba(255, 255, 255, 0.8)',
-                        transition: 'top 0.5s ease, left 0.5s ease'
-                    }} />
-                )}
 
-                {/* 이동 방향 화살표 */}
-                {isTracking && (
-                    <div style={{
-                        position: 'absolute',
-                        top: `calc(50% + ${personPosition.y + mapOffset.y}px)`,
-                        left: `calc(50% + ${personPosition.x + mapOffset.x}px)`,
-                        width: '0',
-                        height: '0',
-                        borderLeft: '6px solid transparent',
-                        borderRight: '6px solid transparent',
-                        borderBottom: '10px solid red',
-                        transform: `translate(-50%, -50%) rotate(${movementDirection}deg) translateY(-15px)`,
-                        zIndex: 1000,
-                        transition: 'transform 0.5s ease',
-                        filter: 'drop-shadow(0 0 4px rgba(255, 0, 0, 0.6))'
-                    }} />
-                )}
-
-                {/* 이동 경로 대시선 */}
-                {isTracking && (
-                    <svg
-                        style={{
-                            position: 'absolute',
-                            top: '0',
-                            left: '0',
-                            width: '100%',
-                            height: '100%',
-                            zIndex: 999,
-                            pointerEvents: 'none'
-                        }}
-                    >
-                        <path
-                            d={movementPath.length > 1 ? 
-                                `M ${movementPath.map((pos, index) => 
-                                    `${50 + (pos.x / 10)}% ${50 + (pos.y / 10)}%`
-                                ).join(' L ')}` : ''}
-                            stroke="red"
-                            strokeWidth="2"
-                            fill="none"
-                            strokeDasharray="5,5"
-                            opacity="0.7"
-                        />
-                    </svg>
-                )}
 
                 {/* 작업자 위치 표시 */}
                 {workerPositions.map((worker, index) => {
@@ -430,8 +486,10 @@ const WebMain = ({ onLogout }) => {
                         { x: 0, y: -120 }     // W006
                     ];
                     
-                    const screenX = positions[index]?.x || 0;
-                    const screenY = positions[index]?.y || 0;
+                    const movement = workerMovements[worker.workerId];
+                    const screenX = movement ? movement.x : (positions[index]?.x || 0);
+                    const screenY = movement ? movement.y : (positions[index]?.y || 0);
+                    const direction = movement ? movement.direction : 0;
                     
                     // 작업 상태에 따른 색상 결정
                     const getWorkerColor = (workStatus) => {
@@ -473,7 +531,10 @@ const WebMain = ({ onLogout }) => {
                             title={`${worker.workerId} - ${worker.location} (${worker.activity}) - ${worker.workStatus}`}
                             onMouseEnter={(e) => {
                                 e.target.style.transform = 'translate(-50%, -50%) scale(1.2)';
-                                e.target.querySelector('div').style.opacity = '1';
+                                const labelDiv = e.target.querySelector('div');
+                                if (labelDiv) {
+                                    labelDiv.style.opacity = '1';
+                                }
                                 
                                 // 모달 표시
                                 setSelectedWorker(worker);
@@ -485,7 +546,10 @@ const WebMain = ({ onLogout }) => {
                             }}
                             onMouseLeave={(e) => {
                                 e.target.style.transform = 'translate(-50%, -50%) scale(1)';
-                                e.target.querySelector('div').style.opacity = '0';
+                                const labelDiv = e.target.querySelector('div');
+                                if (labelDiv) {
+                                    labelDiv.style.opacity = '0';
+                                }
                                 
                                 // 모달 숨김
                                 setTimeout(() => {
@@ -536,6 +600,23 @@ const WebMain = ({ onLogout }) => {
                                     !
                                 </div>
                             )}
+                            
+                            {/* 이동 방향 삼각형 */}
+                            <div style={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                width: '0',
+                                height: '0',
+                                borderLeft: '4px solid transparent',
+                                borderRight: '4px solid transparent',
+                                borderBottom: '8px solid rgba(255, 255, 255, 0.9)',
+                                transform: `translate(-50%, -50%) rotate(${direction}deg) translateY(-12px)`,
+                                zIndex: 9997,
+                                transition: 'transform 0.3s ease',
+                                filter: 'drop-shadow(0 0 2px rgba(0, 0, 0, 0.6))',
+                                pointerEvents: 'none'
+                            }} />
                         </div>
                     );
                 }                )}
@@ -629,32 +710,7 @@ const WebMain = ({ onLogout }) => {
                     `}
                 </style>
 
-                {/* <h6 style={{margin:0,textAlign:'left'}}>모바일 메인 화면</h6> */}
-                {isTracking ? (
-                    <>
-                       
-                       
-                        {/* <div
-                            style={{
-                                fontSize: '10px',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                gap: '10px',
-                                backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                                padding: '10px',
-                                borderRadius: '5px',
-                                margin: '10px'
-                            }}
-                        >
-                            <div>실시간 위치 정보:</div>
-                            <div>TIME: {new Date().toLocaleTimeString()}</div>
-                            <div>LAT: {location.lat?.toFixed(6)}</div>
-                            <div>LNG: {location.lng?.toFixed(6)}</div>
-                        </div> */}
-                    </>
-                ) : (
-                    <p>위치 추적이 비활성화되어 있습니다.</p>
-                )}
+
             </div>
 
 
