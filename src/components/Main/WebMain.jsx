@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../Layouts/Admin/Layout';
+import { getWorkerMovements, getAllWorkersInfo } from '../Api/workerApi';
 
 const WebMain = ({ onLogout }) => {
     const [location, setLocation] = useState({ lat: null, lng: null });
@@ -26,6 +27,49 @@ const WebMain = ({ onLogout }) => {
     const [personPosition, setPersonPosition] = useState({ x: 0, y: 0 });
     const [movementPath, setMovementPath] = useState([]); // 이동 경로 저장
     const [movementDirection, setMovementDirection] = useState(0); // 이동 방향 (각도)
+
+    // 작업자 위치 데이터 상태
+    const [workerPositions, setWorkerPositions] = useState([]);
+    
+    // 모달 상태
+    const [showModal, setShowModal] = useState(false);
+    const [selectedWorker, setSelectedWorker] = useState(null);
+    const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
+
+    // 작업자 이동 데이터 가져오기
+    useEffect(() => {
+        const fetchWorkerMovements = async () => {
+            try {
+                const movementData = await getWorkerMovements();
+                const workerData = await getAllWorkersInfo();
+                
+                if (movementData && workerData) {
+                    // 각 작업자의 최신 위치를 추출
+                    const positions = movementData.workerMovements.map(worker => {
+                        const latestMovement = worker.movementData[worker.movementData.length - 1];
+                        const workerInfo = workerData.workers.find(w => w.workerId === worker.workerId);
+                        
+                        return {
+                            workerId: worker.workerId,
+                            latitude: latestMovement.latitude,
+                            longitude: latestMovement.longitude,
+                            location: latestMovement.location,
+                            activity: latestMovement.activity,
+                            taskNumber: latestMovement.taskNumber,
+                            connectionStatus: workerInfo?.connectionStatus || 'unknown',
+                            workStatus: workerInfo?.workStatus || 'unknown'
+                        };
+                    });
+                    
+                    setWorkerPositions(positions);
+                }
+            } catch (error) {
+                console.error('Error fetching worker data:', error);
+            }
+        };
+        
+        fetchWorkerMovements();
+    }, []);
 
     // 100개의 더미 위치 데이터 생성 (서울 시청 주변을 중심으로 한 동선)
     const dummyLocations = Array.from({ length: 100 }, (_, index) => {
@@ -375,6 +419,155 @@ const WebMain = ({ onLogout }) => {
                             opacity="0.7"
                         />
                     </svg>
+                )}
+
+                {/* 작업자 위치 표시 */}
+                {workerPositions.map((worker, index) => {
+                    // 각 작업자별로 다른 위치에 배치 (간단한 방식)
+                    const positions = [
+                        { x: -100, y: -50 },  // W001
+                        { x: 100, y: -50 },   // W002
+                        { x: 0, y: 100 }      // W003
+                    ];
+                    
+                    const screenX = positions[index]?.x || 0;
+                    const screenY = positions[index]?.y || 0;
+                    
+                    // 작업 상태에 따른 색상 결정
+                    const getWorkerColor = (workStatus) => {
+                        switch (workStatus) {
+                            case '작업중':
+                                return '#28a745'; // 초록색
+                            case '작업일시중지':
+                                return '#ff8c00'; // 주황색
+                            case '완료':
+                                return '#ffffff'; // 흰색
+                            case 'SOS':
+                                return '#dc3545'; // 빨간색
+                            default:
+                                return '#6c757d'; // 회색 (기본값)
+                        }
+                    };
+                    
+                    const workerColor = getWorkerColor(worker.workStatus);
+                    const isConnected = worker.connectionStatus === 'connected';
+                    
+                    return (
+                        <div
+                            key={worker.workerId}
+                            style={{
+                                position: 'absolute',
+                                top: `calc(50% + ${screenY + mapOffset.y}px)`,
+                                left: `calc(50% + ${screenX + mapOffset.x}px)`,
+                                width: '16px',
+                                height: '16px',
+                                backgroundColor: workerColor,
+                                borderRadius: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                zIndex: 9999,
+                                boxShadow: `0 0 8px ${workerColor === '#ffffff' ? 'rgba(0, 0, 0, 0.8)' : workerColor + '80'}, 0 0 16px ${workerColor === '#ffffff' ? 'rgba(0, 0, 0, 0.4)' : workerColor + '40'}`,
+                                border: workerColor === '#ffffff' ? '2px solid #000000' : '2px solid rgba(255, 255, 255, 0.8)',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease'
+                            }}
+                            title={`${worker.workerId} - ${worker.location} (${worker.activity}) - ${worker.workStatus}`}
+                            onMouseEnter={(e) => {
+                                e.target.style.transform = 'translate(-50%, -50%) scale(1.2)';
+                                e.target.querySelector('div').style.opacity = '1';
+                                
+                                // 모달 표시
+                                setSelectedWorker(worker);
+                                setModalPosition({
+                                    x: e.clientX + 10,
+                                    y: e.clientY - 10
+                                });
+                                setShowModal(true);
+                            }}
+                            onMouseLeave={(e) => {
+                                e.target.style.transform = 'translate(-50%, -50%) scale(1)';
+                                e.target.querySelector('div').style.opacity = '0';
+                                
+                                // 모달 숨김
+                                setTimeout(() => {
+                                    setShowModal(false);
+                                    setSelectedWorker(null);
+                                }, 100);
+                            }}
+                        >
+                            <div style={{
+                                position: 'absolute',
+                                top: '-25px',
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                color: 'white',
+                                padding: '4px 8px',
+                                borderRadius: '4px',
+                                fontSize: '10px',
+                                whiteSpace: 'nowrap',
+                                opacity: 0,
+                                transition: 'opacity 0.3s ease',
+                                pointerEvents: 'none'
+                            }}>
+                                {worker.workerId}
+                            </div>
+                        </div>
+                    );
+                }                )}
+
+                {/* 작업자 정보 모달 */}
+                {showModal && selectedWorker && (
+                    <div
+                        style={{
+                            position: 'fixed',
+                            top: modalPosition.y,
+                            left: modalPosition.x,
+                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            color: 'white',
+                            padding: '15px',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            zIndex: 10000,
+                            minWidth: '200px',
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                            pointerEvents: 'none'
+                        }}
+                    >
+                        <div style={{ marginBottom: '8px', fontWeight: 'bold', fontSize: '14px' }}>
+                            {selectedWorker.workerId}
+                        </div>
+                        <div style={{ marginBottom: '4px' }}>
+                            <strong>위치:</strong> {selectedWorker.location}
+                        </div>
+                        <div style={{ marginBottom: '4px' }}>
+                            <strong>활동:</strong> {selectedWorker.activity}
+                        </div>
+                        <div style={{ marginBottom: '4px' }}>
+                            <strong>작업 번호:</strong> {selectedWorker.taskNumber}
+                        </div>
+                        <div style={{ marginBottom: '4px' }}>
+                            <strong>작업 상태:</strong> 
+                            <span style={{ 
+                                color: selectedWorker.workStatus === '작업중' ? '#28a745' : 
+                                       selectedWorker.workStatus === '작업일시중지' ? '#ff8c00' :
+                                       selectedWorker.workStatus === '완료' ? '#ffffff' :
+                                       selectedWorker.workStatus === 'SOS' ? '#dc3545' : '#6c757d',
+                                fontWeight: 'bold'
+                            }}>
+                                {selectedWorker.workStatus}
+                            </span>
+                        </div>
+                        <div>
+                            <strong>연결 상태:</strong> 
+                            <span style={{ 
+                                color: selectedWorker.connectionStatus === 'connected' ? '#28a745' : '#dc3545',
+                                fontWeight: 'bold'
+                            }}>
+                                {selectedWorker.connectionStatus === 'connected' ? '연결됨' : '연결안됨'}
+                            </span>
+                        </div>
+                    </div>
                 )}
 
                 <style>
