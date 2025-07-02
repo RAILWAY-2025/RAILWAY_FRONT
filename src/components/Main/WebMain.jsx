@@ -6,8 +6,7 @@ const WebMain = ({ onLogout }) => {
     const [location, setLocation] = useState({ lat: null, lng: null });
     const [isTracking, setIsTracking] = useState(true);
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [locationHistory, setLocationHistory] = useState([]);
-    const [isHistoryVisible, setIsHistoryVisible] = useState(true);
+
     const [mapOffset, setMapOffset] = useState({ x: 0, y: 0 }); // 지도 이동을 위한 오프셋
     const [mapZoom, setMapZoom] = useState(1); // 지도 확대/축소
     const [mapHistory, setMapHistory] = useState([]); // 지도 이동 히스토리
@@ -98,7 +97,6 @@ const WebMain = ({ onLogout }) => {
             const timer = setTimeout(() => {
                 const currentLocation = dummyLocations[currentIndex];
                 setLocation({ lat: currentLocation.lat, lng: currentLocation.lng });
-                setLocationHistory(prev => [...prev, currentLocation]);
                 setCurrentIndex(prev => prev + 1);
                 
                 // 사람 위치 점 이동 (위치 기록 시마다)
@@ -127,7 +125,6 @@ const WebMain = ({ onLogout }) => {
     // 컴포넌트 마운트 시 추적 시작
     useEffect(() => {
         setCurrentIndex(0);
-        setLocationHistory([]);
         setPersonPosition({ x: 0, y: 0 }); // 사람 위치 초기화
         setMovementPath([]); // 이동 경로 초기화
     }, []);
@@ -425,9 +422,12 @@ const WebMain = ({ onLogout }) => {
                 {workerPositions.map((worker, index) => {
                     // 각 작업자별로 다른 위치에 배치 (간단한 방식)
                     const positions = [
-                        { x: -100, y: -50 },  // W001
-                        { x: 100, y: -50 },   // W002
-                        { x: 0, y: 100 }      // W003
+                        { x: -150, y: -80 },  // W001
+                        { x: 150, y: -80 },   // W002
+                        { x: 0, y: 120 },     // W003
+                        { x: -150, y: 80 },   // W004
+                        { x: 150, y: 80 },    // W005
+                        { x: 0, y: -120 }     // W006
                     ];
                     
                     const screenX = positions[index]?.x || 0;
@@ -511,6 +511,31 @@ const WebMain = ({ onLogout }) => {
                             }}>
                                 {worker.workerId}
                             </div>
+                            
+                            {/* 연결안됨 경고 표시 */}
+                            {worker.connectionStatus === 'disconnected' && (
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '-40px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    backgroundColor: '#dc3545',
+                                    color: 'white',
+                                    width: '20px',
+                                    height: '20px',
+                                    borderRadius: '50%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '14px',
+                                    fontWeight: 'bold',
+                                    boxShadow: '0 0 8px rgba(220, 53, 69, 0.8)',
+                                    animation: 'pulse-warning 1.5s infinite',
+                                    zIndex: 9998
+                                }}>
+                                    !
+                                </div>
+                            )}
                         </div>
                     );
                 }                )}
@@ -586,6 +611,21 @@ const WebMain = ({ onLogout }) => {
                                 opacity: 1;
                             }
                         }
+                        
+                        @keyframes pulse-warning {
+                            0% {
+                                transform: translateX(-50%) scale(1);
+                                opacity: 1;
+                            }
+                            50% {
+                                transform: translateX(-50%) scale(1.3);
+                                opacity: 0.7;
+                            }
+                            100% {
+                                transform: translateX(-50%) scale(1);
+                                opacity: 1;
+                            }
+                        }
                     `}
                 </style>
 
@@ -611,78 +651,6 @@ const WebMain = ({ onLogout }) => {
                             <div>LAT: {location.lat?.toFixed(6)}</div>
                             <div>LNG: {location.lng?.toFixed(6)}</div>
                         </div> */}
-
-
-
-                        <div
-                            style={{
-                                marginTop: '20px',
-                                width: '120px',
-                                height: '200px',
-                                position: 'absolute',
-                                right: isHistoryVisible ? '0' : '-120px',
-                                bottom: '40px',
-                                maxHeight: '200px',
-                                transition: 'right 0.3s ease-in-out',
-                                backgroundColor: 'white',
-                                border: '1px solid #ccc',
-                                borderRadius: '5px 0 0 5px',
-                                boxShadow: '2px 0 5px rgba(0,0,0,0.1)'
-                            }}
-                        >
-                            <div
-                                style={{
-                                    position: 'absolute',
-                                    left: '-20px',
-                                    top: '100px',
-                                    width: '20px',
-                                    height: '40px',
-                                    backgroundColor: '#007bff',
-                                    color: 'white',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    cursor: 'pointer',
-                                    borderRadius: '5px 0 0 5px',
-                                    fontSize: '12px',
-                                    zIndex: 1001,
-                                    touchAction: 'auto',
-                                    pointerEvents: 'auto'
-                                }}
-                                onClick={() => setIsHistoryVisible(!isHistoryVisible)}
-                                onTouchStart={() => setIsHistoryVisible(!isHistoryVisible)}
-                            >
-                                {isHistoryVisible ? '◀' : '▶'}
-                            </div>
-
-
-                            {isHistoryVisible && (
-                                <div >
-                                    <h6 style={{ marginBottom: '5px', marginTop: '5px', backgroundColor: '#f0f8ff', padding: "5px 0" }}>
-                                        위치 기록 ({locationHistory.length}개)
-                                    </h6>
-                                    <div style={{
-                                        height: "calc(100vh - 330px)",
-                                        maxHeight: "120px",
-                                        overflowY: 'auto',
-                                        fontSize: "5px",
-                                        padding: "0 5px"
-                                    }}>
-                                        {locationHistory.slice().reverse().map((loc, index) => (
-                                            <div key={loc.id} style={{
-                                                padding: '8px',
-                                                borderBottom: index < locationHistory.length - 1 ? '1px solid #eee' : 'none',
-                                                backgroundColor: index === 0 ? '#f0f8ff' : 'transparent',
-                                            }}>
-                                                <strong>위치 {loc.id}</strong> - {loc.timestamp}
-                                                <br />
-                                                위도: {loc.lat.toFixed(6)}, 경도: {loc.lng.toFixed(6)}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
                     </>
                 ) : (
                     <p>위치 추적이 비활성화되어 있습니다.</p>
