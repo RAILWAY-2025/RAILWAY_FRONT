@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../Layouts/Admin/Layout';
 
-const WebMain = () => {
+const WebMain = ({ onLogout }) => {
     const [location, setLocation] = useState({ lat: null, lng: null });
     const [isTracking, setIsTracking] = useState(true);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -251,7 +251,7 @@ const WebMain = () => {
 
 
     return (
-        <Layout>
+        <Layout onLogout={onLogout}>
             <div
                 ref={mapRef}
                 onTouchStart={handleTouchStart}

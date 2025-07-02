@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../Layouts/Woker/Layout';
+import { getWorkerInfo } from '../Api/workerApi';
 
-const WorkerMain = ({ onLogout }) => {
+const WorkerMain = ({ onLogout, workerId }) => {
     const [currentTask, setCurrentTask] = useState('');
     const [workStatus, setWorkStatus] = useState('대기중'); // '대기중', '작업중', '작업일시중지', '완료'
     const [completedTasks, setCompletedTasks] = useState([]); // 완료된 작업 목록
@@ -12,6 +13,53 @@ const WorkerMain = ({ onLogout }) => {
     const [workStartTime, setWorkStartTime] = useState(null); // 작업 시작 시간
     const [workEndTime, setWorkEndTime] = useState(null); // 작업 종료 시간
     const [showCompletionScreen, setShowCompletionScreen] = useState(false); // 작업 완료 화면 표시 여부
+    const [workerInfo, setWorkerInfo] = useState(null); // JSON에서 가져온 작업자 정보
+
+    // JSON에서 작업자 정보 가져오기
+    useEffect(() => {
+        const fetchWorkerInfo = async () => {
+            if (workerId) {
+                const info = await getWorkerInfo(workerId);
+                if (info) {
+                    setWorkerInfo(info);
+                    // JSON 데이터로 초기 상태 설정
+                    setWorkStatus(info.workStatus);
+                    setCurrentTask(info.currentTaskName || '');
+                    
+                    // 작업 목록 설정
+                    const tasks = info.taskList.map(task => ({
+                        id: Date.now() + task.taskNumber,
+                        number: task.taskNumber,
+                        content: task.taskName,
+                        completed: task.taskStatus === 'completed'
+                    }));
+                    setTaskList(tasks);
+                    
+                    // 완료된 작업 설정
+                    const completed = tasks
+                        .filter(task => task.completed)
+                        .map(task => task.id);
+                    setCompletedTasks(completed);
+                    
+                    // 작업 시작 시간 설정
+                    if (info.workCompletion.workStartTime) {
+                        setWorkStartTime(new Date(info.workCompletion.workStartTime));
+                    }
+                    
+                    // 작업 완료 상태 설정
+                    if (info.workCompletion.isCompleted) {
+                        setWorkStatus('완료');
+                        setShowCompletionScreen(true);
+                        if (info.workCompletion.workEndTime) {
+                            setWorkEndTime(new Date(info.workCompletion.workEndTime));
+                        }
+                    }
+                }
+            }
+        };
+        
+        fetchWorkerInfo();
+    }, [workerId]);
 
     const handleWorkToggle = () => {
         if (workStatus === '대기중') {
@@ -218,6 +266,65 @@ const WorkerMain = ({ onLogout }) => {
                         서버연결됨
                     </div>
                 </div>
+
+                {/* JSON 데이터 표시 섹션 */}
+                {workerInfo && (
+                    <div style={{
+                        backgroundColor: '#e8f4fd',
+                        padding: '15px',
+                        borderRadius: '10px',
+                        marginBottom: '15px',
+                        border: '1px solid #b3d9ff'
+                    }}>
+                        <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', color: '#0056b3' }}>
+                            JSON 데이터 정보
+                        </h3>
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr',
+                            gap: '10px',
+                            fontSize: '14px'
+                        }}>
+                            <div>
+                                <strong>작업자 ID:</strong> {workerInfo.workerId}
+                            </div>
+                            <div>
+                                <strong>연결 상태:</strong> 
+                                <span style={{ 
+                                    color: workerInfo.connectionStatus === 'connected' ? '#28a745' : '#dc3545',
+                                    fontWeight: 'bold'
+                                }}>
+                                    {workerInfo.connectionStatus === 'connected' ? '연결됨' : '연결안됨'}
+                                </span>
+                            </div>
+                            <div>
+                                <strong>현재 작업:</strong> {workerInfo.currentTaskName || '없음'}
+                            </div>
+                            <div>
+                                <strong>작업 상태:</strong> 
+                                <span style={{ 
+                                    color: workerInfo.workStatus === '작업중' ? '#28a745' : 
+                                           workerInfo.workStatus === '완료' ? '#007bff' : '#ffc107',
+                                    fontWeight: 'bold'
+                                }}>
+                                    {workerInfo.workStatus}
+                                </span>
+                            </div>
+                            <div>
+                                <strong>달성률:</strong> {workerInfo.workCompletion.completionRate}%
+                            </div>
+                            <div>
+                                <strong>작업 완료:</strong> 
+                                <span style={{ 
+                                    color: workerInfo.workCompletion.isCompleted ? '#28a745' : '#dc3545',
+                                    fontWeight: 'bold'
+                                }}>
+                                    {workerInfo.workCompletion.isCompleted ? '완료' : '미완료'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* 현재 작업 정보 또는 작업 완료 화면 */}
                 <div style={{

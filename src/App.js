@@ -9,9 +9,11 @@ import WorkerMain from './components/Main/WorkerMain';
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userType, setUserType] = useState(''); // 'worker' or 'admin'
+  const [userId, setUserId] = useState(''); // 사용자 ID 저장
 
   const handleLogin = (formData) => {
     setIsLoggedIn(true);
+    setUserId(formData.id);
     // 간단한 로직: ID에 'worker'가 포함되면 작업자, 아니면 관리자
     if (formData.id.toLowerCase().includes('worker')) {
       setUserType('worker');
@@ -23,13 +25,14 @@ function App() {
   const handleLogout = () => {
     setIsLoggedIn(false);
     setUserType('');
+    setUserId('');
   };
 
   // 작업자 화면
   if (isLoggedIn && userType === 'worker') {
     return (
       <div className="App">
-        <WorkerMain onLogout={handleLogout} />
+        <WorkerMain onLogout={handleLogout} workerId={userId} />
       </div>
     );
   }
