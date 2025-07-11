@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../Layouts/Admin/Layout';
 import { getWorkerMovements, getAllWorkersInfo } from '../Api/workerApi';
+// import linePathData from '../../../public/dataset/linePath.json'; // 제거
 
 const WebMain = ({ onLogout }) => {
     const [mapOffset, setMapOffset] = useState({ x: 0, y: 0 }); // 지도 이동을 위한 오프셋
@@ -14,6 +15,7 @@ const WebMain = ({ onLogout }) => {
     const [initialDistance, setInitialDistance] = useState(0);
     const [initialZoom, setInitialZoom] = useState(1);
     const mapRef = useRef(null);
+    const [containerSize, setContainerSize] = useState({ width: 1920, height: 1080 });
 
     // 이미지 원본 사이즈
     const imageSize = { width: 1920, height: 1080 };
@@ -28,6 +30,7 @@ const WebMain = ({ onLogout }) => {
 
     // 작업자 이동 상태
     const [workerMovements, setWorkerMovements] = useState({});
+    const [workerTrails, setWorkerTrails] = useState({}); // workerId별 이동 경로 trail
 
     // 작업자 이동 데이터 가져오기
     useEffect(() => {
@@ -63,6 +66,32 @@ const WebMain = ({ onLogout }) => {
         
         fetchWorkerMovements();
     }, []);
+
+    // linePath.json fetch로 불러오기
+    const [linePath, setLinePath] = useState([]);
+
+    useEffect(() => {
+        fetch(process.env.PUBLIC_URL + '/dataset/linePath.json')
+            .then(res => res.json())
+            .then(data => setLinePath(data.linePath || []));
+    }, []);
+
+    useEffect(() => {
+      const handleResize = () => {
+        if (mapRef.current) {
+          setContainerSize({
+            width: mapRef.current.offsetWidth,
+            height: mapRef.current.offsetHeight
+          });
+        }
+      };
+      window.addEventListener('resize', handleResize);
+      handleResize();
+      return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const scaleX = containerSize.width / 1920;
+    const scaleY = containerSize.height / 1080;
 
     // GPS 좌표를 화면 좌표로 변환하는 함수
     const gpsToScreen = (lat, lng) => {
@@ -245,6 +274,31 @@ const WebMain = ({ onLogout }) => {
         };
     }, [workerPositions]);
 
+    // 이동 시 trail도 함께 업데이트
+    useEffect(() => {
+        const intervals = {};
+        workerPositions.forEach((worker, index) => {
+            const workerId = worker.workerId;
+            if (worker.connectionStatus === 'disconnected') return;
+            let currentTrail = workerTrails[workerId] || [];
+            intervals[workerId] = setInterval(() => {
+                setWorkerMovements(prev => {
+                    const movement = prev[workerId];
+                    if (!movement) return prev;
+                    // trail에 현재 위치 추가
+                    setWorkerTrails(trails => ({
+                        ...trails,
+                        [workerId]: [...(trails[workerId] || []), { x: movement.x, y: movement.y }]
+                    }));
+                    return prev;
+                });
+            }, 1000 + index * 500);
+        });
+        return () => Object.values(intervals).forEach(clearInterval);
+    }, [workerPositions, workerMovements, workerTrails]);
+
+    // linePath.json 불러오기 (이미 import됨)
+    // const linePath = linePathData.linePath; // 제거
 
 
     // 지도 이동 함수들
@@ -418,8 +472,7 @@ const WebMain = ({ onLogout }) => {
                 onTouchEnd={handleTouchEnd}
                 style={{
                     backgroundImage: `url(${process.env.PUBLIC_URL}/images/maps/jinyung-map.png)`,
-                    backgroundSize: `auto ${100 * mapZoom}%`,
-                    // backgroundPosition: `${mapOffset.x}px ${mapOffset.y}px`,
+                    backgroundSize: '100% 100%',
                     backgroundPosition: 'center',
                     backgroundRepeat: 'no-repeat',
                     width: '100%',
@@ -620,6 +673,87 @@ const WebMain = ({ onLogout }) => {
                         </div>
                     );
                 }                )}
+
+                {/* linePath 경로 점 시각화 (파란색 원 + 인덱스) */}
+                {linePath && linePath.map((pt, idx) => (
+                  <div
+                    key={`linepath-dot-${idx}`}
+                    style={{
+                      position: 'absolute',
+                      left: pt.x * scaleX + mapOffset.x,
+                      top: pt.y * scaleY + mapOffset.y,
+                      width: '28px',
+                      height: '28px',
+                      background: 'rgba(0, 200, 255, 0.9)',
+                      border: '4px solid #fff',
+                      borderRadius: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      zIndex: 20000,
+                      boxShadow: '0 0 16px 8px #00e0ff, 0 0 0 4px #000',
+                      pointerEvents: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 'bold',
+                      fontSize: '16px',
+                      color: '#fff',
+                      textShadow: '0 0 4px #000, 0 0 8px #00e0ff',
+                    }}
+                    title={`linePath[${idx}] (${pt.x}, ${pt.y})`}
+                  >
+                    {idx}
+                  </div>
+                ))}
+
+                {/* 작업자 dash 이동 경로 표시 (SVG polyline) */}
+                {Object.entries(workerTrails).map(([workerId, trail], idx) => (
+                  <svg
+                    key={workerId}
+                    width={containerSize.width}
+                    height={containerSize.height}
+                    style={{
+                      position: 'absolute',
+                      left: mapOffset.x,
+                      top: mapOffset.y,
+                      pointerEvents: 'none',
+                      zIndex: 15000
+                    }}
+                  >
+                    <polyline
+                      points={trail.map(pt => `${pt.x * scaleX},${pt.y * scaleY}`).join(' ')}
+                      fill="none"
+                      stroke="#00e0ff"
+                      strokeWidth="8"
+                      strokeDasharray="18 12"
+                      opacity="0.7"
+                    />
+                  </svg>
+                ))}
+
+                {/* linePath.json 불러오기 (이미 import됨) */}
+                {linePath.length > 1 && (
+                  <svg
+                    width={containerSize.width}
+                    height={containerSize.height}
+                    style={{
+                      position: 'absolute',
+                      left: mapOffset.x,
+                      top: mapOffset.y,
+                      pointerEvents: 'none',
+                      zIndex: 12000
+                    }}
+                  >
+                    <polyline
+                      points={linePath.map(pt => `${pt.x * scaleX},${pt.y * scaleY}`).join(' ')}
+                      fill="none"
+                      stroke="#ff2222"
+                      strokeWidth={14 * scaleX}
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
+                      opacity="0.85"
+                    />
+                  </svg>
+                )}
 
                 {/* 작업자 정보 모달 */}
                 {showModal && selectedWorker && (
