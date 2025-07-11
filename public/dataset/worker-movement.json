@@ -1,172 +1,172 @@
 {
-    "workerMovements": [
-      {
-        "workerId": "W001",
-        "movementData": [
-          {
-            "timestamp": "2024-01-15T09:00:00Z",
-            "latitude": 35.123456,
-            "longitude": 128.789012,
-            "location": "공장 입구",
-            "activity": "작업 시작",
-            "taskNumber": 1
-          },
-          {
-            "timestamp": "2024-01-15T09:15:00Z", 
-            "latitude": 35.123500,
-            "longitude": 128.789100,
-            "location": "설비 구역 A",
-            "activity": "설비 점검 중",
-            "taskNumber": 1
-          },
-          {
-            "timestamp": "2024-01-15T09:30:00Z",
-            "latitude": 35.123600,
-            "longitude": 128.789200,
-            "location": "안전장치 구역",
-            "activity": "안전장치 확인 중",
-            "taskNumber": 2
-          },
-          {
-            "timestamp": "2024-01-15T09:45:00Z",
-            "latitude": 35.123700,
-            "longitude": 128.789300,
-            "location": "품질검사 구역",
-            "activity": "품질검사 대기",
-            "taskNumber": 3
-          }
-        ],
-        "movementSummary": {
-          "totalDistance": 150.5,
-          "totalTime": 2700,
-          "averageSpeed": 0.056,
-          "startLocation": "공장 입구",
-          "endLocation": "품질검사 구역"
+  "workerMovements": [
+    {
+      "workerId": "W001",
+      "movementData": [
+        {
+          "timestamp": "2024-01-15T09:00:00Z",
+          "latitude": 35.123456,
+          "longitude": 128.789012,
+          "location": "정비기지 출입구",
+          "activity": "작업 구역 진입",
+          "taskNumber": 1
+        },
+        {
+          "timestamp": "2024-01-15T09:15:00Z",
+          "latitude": 35.123500,
+          "longitude": 128.789100,
+          "location": "전차선 점검 지점 A",
+          "activity": "전차선 상태 점검 중",
+          "taskNumber": 1
+        },
+        {
+          "timestamp": "2024-01-15T09:30:00Z",
+          "latitude": 35.123600,
+          "longitude": 128.789200,
+          "location": "선로 변 전기설비 구간",
+          "activity": "절연 장치 이상 여부 확인 중",
+          "taskNumber": 2
+        },
+        {
+          "timestamp": "2024-01-15T09:45:00Z",
+          "latitude": 35.123700,
+          "longitude": 128.789300,
+          "location": "선로 유지보수 대기 지점",
+          "activity": "선로 상태 확인 대기 중",
+          "taskNumber": 3
         }
-      },
-      {
-        "workerId": "W002",
-        "movementData": [
-          {
-            "timestamp": "2024-01-15T08:30:00Z",
-            "latitude": 35.124000,
-            "longitude": 128.790000,
-            "location": "공장 입구",
-            "activity": "출근",
-            "taskNumber": 1
-          },
-          {
-            "timestamp": "2024-01-15T08:45:00Z",
-            "latitude": 35.124100,
-            "longitude": 128.790100,
-            "location": "원자재 창고",
-            "activity": "원자재 검수 대기",
-            "taskNumber": 1
-          },
-          {
-            "timestamp": "2024-01-15T09:00:00Z",
-            "latitude": 35.124200,
-            "longitude": 128.790200,
-            "location": "포장 구역",
-            "activity": "포장 검사 대기",
-            "taskNumber": 2
-          }
-        ],
-        "movementSummary": {
-          "totalDistance": 45.2,
-          "totalTime": 900,
-          "averageSpeed": 0.050,
-          "startLocation": "공장 입구",
-          "endLocation": "포장 구역"
-        }
-      },
-      {
-        "workerId": "W003",
-        "movementData": [
-          {
-            "timestamp": "2024-01-15T08:00:00Z",
-            "latitude": 35.125000,
-            "longitude": 128.791000,
-            "location": "공장 입구",
-            "activity": "작업 시작",
-            "taskNumber": 1
-          },
-          {
-            "timestamp": "2024-01-15T08:30:00Z",
-            "latitude": 35.125100,
-            "longitude": 128.791100,
-            "location": "검사 구역 1",
-            "activity": "초기 점검 완료",
-            "taskNumber": 1
-          },
-          {
-            "timestamp": "2024-01-15T11:30:00Z",
-            "latitude": 35.125200,
-            "longitude": 128.791200,
-            "location": "검사 구역 2",
-            "activity": "최종 검수 완료",
-            "taskNumber": 2
-          },
-          {
-            "timestamp": "2024-01-15T12:00:00Z",
-            "latitude": 35.125000,
-            "longitude": 128.791000,
-            "location": "공장 입구",
-            "activity": "작업 종료",
-            "taskNumber": 2
-          }
-        ],
-        "movementSummary": {
-          "totalDistance": 200.8,
-          "totalTime": 14400,
-          "averageSpeed": 0.014,
-          "startLocation": "공장 입구",
-          "endLocation": "공장 입구"
-        }
-      },
-      {
-        "workerId": "W004",
-        "movementData": [
-          {
-            "timestamp": "2024-01-15T08:30:00Z",
-            "latitude": 35.126000,
-            "longitude": 128.792000,
-            "location": "공장 입구",
-            "activity": "작업 시작",
-            "taskNumber": 1
-          },
-          {
-            "timestamp": "2024-01-15T09:00:00Z",
-            "latitude": 35.126100,
-            "longitude": 128.792100,
-            "location": "설비 구역 B",
-            "activity": "설비 점검 중",
-            "taskNumber": 1
-          },
-          {
-            "timestamp": "2024-01-15T09:30:00Z",
-            "latitude": 35.126200,
-            "longitude": 128.792200,
-            "location": "휴식 구역",
-            "activity": "작업 일시중지",
-            "taskNumber": 1
-          }
-        ],
-        "movementSummary": {
-          "totalDistance": 80.3,
-          "totalTime": 3600,
-          "averageSpeed": 0.022,
-          "startLocation": "공장 입구",
-          "endLocation": "휴식 구역"
-        }
+      ],
+      "movementSummary": {
+        "totalDistance": 150.5,
+        "totalTime": 2700,
+        "averageSpeed": 0.056,
+        "startLocation": "정비기지 출입구",
+        "endLocation": "선로 유지보수 대기 지점"
       }
-    ],
-    "movementAnalytics": {
-      "totalWorkers": 6,
-      "totalMovements": 15,
-      "averageDistancePerWorker": 103.8,
-      "averageTimePerWorker": 4200,
-      "mostActiveWorker": "W003",
-      "lastUpdated": "2024-01-15T10:30:00Z"
+    },
+    {
+      "workerId": "W002",
+      "movementData": [
+        {
+          "timestamp": "2024-01-15T08:30:00Z",
+          "latitude": 35.124000,
+          "longitude": 128.790000,
+          "location": "제어센터 출입구",
+          "activity": "관제 구역 진입",
+          "taskNumber": 1
+        },
+        {
+          "timestamp": "2024-01-15T08:45:00Z",
+          "latitude": 35.124100,
+          "longitude": 128.790100,
+          "location": "신호 연동장치실",
+          "activity": "신호기 제어반 점검 대기",
+          "taskNumber": 1
+        },
+        {
+          "timestamp": "2024-01-15T09:00:00Z",
+          "latitude": 35.124200,
+          "longitude": 128.790200,
+          "location": "신호기 제어실",
+          "activity": "신호 체계 확인 대기 중",
+          "taskNumber": 2
+        }
+      ],
+      "movementSummary": {
+        "totalDistance": 45.2,
+        "totalTime": 900,
+        "averageSpeed": 0.050,
+        "startLocation": "제어센터 출입구",
+        "endLocation": "신호기 제어실"
+      }
+    },
+    {
+      "workerId": "W003",
+      "movementData": [
+        {
+          "timestamp": "2024-01-15T08:00:00Z",
+          "latitude": 35.125000,
+          "longitude": 128.791000,
+          "location": "검측차 출발지점",
+          "activity": "선로 점검 시작",
+          "taskNumber": 1
+        },
+        {
+          "timestamp": "2024-01-15T08:30:00Z",
+          "latitude": 35.125100,
+          "longitude": 128.791100,
+          "location": "검측 구간 1",
+          "activity": "선형 및 궤도 상태 점검 완료",
+          "taskNumber": 1
+        },
+        {
+          "timestamp": "2024-01-15T11:30:00Z",
+          "latitude": 35.125200,
+          "longitude": 128.791200,
+          "location": "검측 구간 2",
+          "activity": "궤간/수평 정밀 검측 완료",
+          "taskNumber": 2
+        },
+        {
+          "timestamp": "2024-01-15T12:00:00Z",
+          "latitude": 35.125000,
+          "longitude": 128.791000,
+          "location": "검측차 출발지점",
+          "activity": "점검 작업 종료",
+          "taskNumber": 2
+        }
+      ],
+      "movementSummary": {
+        "totalDistance": 200.8,
+        "totalTime": 14400,
+        "averageSpeed": 0.014,
+        "startLocation": "검측차 출발지점",
+        "endLocation": "검측차 출발지점"
+      }
+    },
+    {
+      "workerId": "W004",
+      "movementData": [
+        {
+          "timestamp": "2024-01-15T08:30:00Z",
+          "latitude": 35.126000,
+          "longitude": 128.792000,
+          "location": "보선기지 입구",
+          "activity": "작업 준비 완료",
+          "taskNumber": 1
+        },
+        {
+          "timestamp": "2024-01-15T09:00:00Z",
+          "latitude": 35.126100,
+          "longitude": 128.792100,
+          "location": "도상 유지보수 구간 B",
+          "activity": "침목 및 자갈상태 점검 중",
+          "taskNumber": 1
+        },
+        {
+          "timestamp": "2024-01-15T09:30:00Z",
+          "latitude": 35.126200,
+          "longitude": 128.792200,
+          "location": "작업자 대기소",
+          "activity": "점검 중단 및 대기",
+          "taskNumber": 1
+        }
+      ],
+      "movementSummary": {
+        "totalDistance": 80.3,
+        "totalTime": 3600,
+        "averageSpeed": 0.022,
+        "startLocation": "보선기지 입구",
+        "endLocation": "작업자 대기소"
+      }
     }
+  ],
+  "movementAnalytics": {
+    "totalWorkers": 6,
+    "totalMovements": 15,
+    "averageDistancePerWorker": 103.8,
+    "averageTimePerWorker": 4200,
+    "mostActiveWorker": "W003",
+    "lastUpdated": "2024-01-15T10:30:00Z"
   }
+}

@@ -24,7 +24,7 @@ body{
     background: white;
     padding: 30px 25px;
     width: 100%;
-    max-width: 400px;
+    max-width:350px;
     /* box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); */
     border: 1px solid #e1e5e9;
     border-radius: 5px;
@@ -56,11 +56,14 @@ body{
 }
 
 .app-title {
-    font-size: 28px;
+    font-size: 25px;
     font-weight: 700;
     color: #1a1a1a;
     margin-bottom: 5px;
     letter-spacing: 2px;
+    padding-top : 20px;
+    box-sizing: border-box; 
+   
 }
 
 .app-subtitle {

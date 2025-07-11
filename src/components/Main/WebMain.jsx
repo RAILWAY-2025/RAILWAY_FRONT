@@ -803,6 +803,53 @@ const WebMain = ({ onLogout }) => {
     };
 
 
+    // === [상단 우측 작업자 상태 테이블 컴포넌트 추가] ===
+    const WorkerStatusTable = ({ workers }) => (
+      <div
+        style={{
+          position: 'absolute',
+          top: 20,
+          right: 20,
+          background: 'rgba(255,255,255,0.95)',
+          border: '1px solid #e0e0e0',
+          borderRadius: 8,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          zIndex: 20000,
+          minWidth: 260,
+          fontSize: 12,
+          padding: '10px 14px',
+          maxHeight: 320,
+          overflowY: 'auto',
+        }}
+      >
+        <div style={{ fontWeight: 'bold', fontSize: 14, marginBottom: 6, color: '#333', textAlign: 'center' }}>
+          작업자 상태
+        </div>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ background: '#f5f7fa' }}>
+              <th style={{ padding: '2px 4px', borderBottom: '1px solid #e0e0e0', fontWeight: 600 }}>ID</th>
+              <th style={{ padding: '2px 4px', borderBottom: '1px solid #e0e0e0', fontWeight: 600 }}>상태</th>
+              <th style={{ padding: '2px 4px', borderBottom: '1px solid #e0e0e0', fontWeight: 600 }}>연결</th>
+              <th style={{ padding: '2px 4px', borderBottom: '1px solid #e0e0e0', fontWeight: 600 }}>위치</th>
+              <th style={{ padding: '2px 4px', borderBottom: '1px solid #e0e0e0', fontWeight: 600 }}>활동</th>
+            </tr>
+          </thead>
+          <tbody>
+            {workers.map((w) => (
+              <tr key={w.workerId} style={{ background: w.connectionStatus === 'connected' ? '#fff' : '#fbeaea' }}>
+                <td style={{ padding: '2px 4px', textAlign: 'center', fontWeight: 500 }}>{w.workerId}</td>
+                <td style={{ padding: '2px 4px', textAlign: 'center', color: w.workStatus === '작업중' ? '#28a745' : w.workStatus === '작업일시중지' ? '#ff8c00' : w.workStatus === '완료' ? '#007bff' : w.workStatus === 'SOS' ? '#dc3545' : '#6c757d', fontWeight: 600 }}>{w.workStatus}</td>
+                <td style={{ padding: '2px 4px', textAlign: 'center', color: w.connectionStatus === 'connected' ? '#28a745' : '#dc3545', fontWeight: 600 }}>{w.connectionStatus === 'connected' ? '연결' : '끊김'}</td>
+                <td style={{ padding: '2px 4px', textAlign: 'center' }}>{w.location}</td>
+                <td style={{ padding: '2px 4px', textAlign: 'center' }}>{w.activity}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+
     return (
         <Layout onLogout={onLogout}>
             <div
@@ -1213,6 +1260,9 @@ const WebMain = ({ onLogout }) => {
                         </div>
                     </div>
                 )}
+
+                {/* 우측상단 상태 테이블 */}
+                <WorkerStatusTable workers={workerPositions} />
 
                 <style>
                     {`
