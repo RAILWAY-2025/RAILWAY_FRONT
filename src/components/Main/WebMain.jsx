@@ -30,7 +30,53 @@ const WebMain = ({ onLogout }) => {
 
     // 작업자 이동 상태
     const [workerMovements, setWorkerMovements] = useState({});
-    const [workerTrails, setWorkerTrails] = useState({}); // workerId별 이동 경로 trail
+    // trail 상태 관리
+    const [workerTrails, setWorkerTrails] = useState({ W001: [] }); // { W001: [ {from, to}, ... ] }
+    // (중복 선언 제거) w001Pos는 아래에서만 선언
+
+    // W001 불규칙 지그재그 경로 생성 함수
+    const generateIrregularZigzagPath = (start, end, steps = 40) => {
+        const zigzagAmplitude = 15; // 지그재그 크기
+        const irregularity = 0.7; // 불규칙성 정도
+        
+        const path = [];
+        let prevOffset = 0;
+        
+        for (let i = 0; i <= steps; i++) {
+            const t = i / steps;
+            const x = start.x + (end.x - start.x) * t;
+            const y = start.y + (end.y - start.y) * t;
+            
+            // 부드러운 랜덤 offset 생성
+            const randomSeed = i * 0.3;
+            const randomOffset = (Math.sin(randomSeed * 100) * 0.5 + Math.sin(randomSeed * 50) * 0.3) * 2;
+            
+            // 이전 offset과의 부드러운 연결
+            const targetOffset = randomOffset * zigzagAmplitude;
+            const currentOffset = prevOffset + (targetOffset - prevOffset) * irregularity;
+            
+            // 직선 방향에 수직인 벡터 계산
+            const dx = end.x - start.x;
+            const dy = end.y - start.y;
+            const len = Math.sqrt(dx * dx + dy * dy);
+            
+            if (len > 0) {
+                const nx = -dy / len; // 수직 벡터 (x)
+                const ny = dx / len;  // 수직 벡터 (y)
+                
+                path.push({
+                    x: x + nx * currentOffset,
+                    y: y + ny * currentOffset,
+                });
+            } else {
+                path.push({ x, y });
+            }
+            
+            prevOffset = currentOffset;
+        }
+        
+        return path;
+    };
 
     // 작업자 이동 데이터 가져오기
     useEffect(() => {
@@ -44,7 +90,7 @@ const WebMain = ({ onLogout }) => {
                     const positions = movementData.workerMovements.map(worker => {
                         const latestMovement = worker.movementData[worker.movementData.length - 1];
                         const workerInfo = workerData.workers.find(w => w.workerId === worker.workerId);
-                        
+
                         return {
                             workerId: worker.workerId,
                             latitude: latestMovement.latitude,
@@ -56,7 +102,7 @@ const WebMain = ({ onLogout }) => {
                             workStatus: workerInfo?.workStatus || 'unknown'
                         };
                     });
-                    
+
                     setWorkerPositions(positions);
                 }
             } catch (error) {
@@ -117,41 +163,128 @@ const WebMain = ({ onLogout }) => {
         return { x, y };
     };
 
-    // 작업자 GPS 추적 애니메이션
+    // W001 불규칙 지그재그 이동 로직
+    const [w001Path, setW001Path] = useState([]);
+    const [w001CurrentIndex, setW001CurrentIndex] = useState(0);
+    const [w001Forward, setW001Forward] = useState(true);
+    const [w001Trail, setW001Trail] = useState([]);
+
+    useEffect(() => {
+        if (!linePath[10] || !linePath[11]) return;
+        
+        // 불규칙 지그재그 경로 생성
+        const zigzagPath = generateIrregularZigzagPath(linePath[10], linePath[11], 40);
+        setW001Path(zigzagPath);
+        setW001CurrentIndex(0);
+        setW001Forward(true);
+        setW001Trail([]);
+        
+        // W001 초기 위치 설정
+        if (zigzagPath.length > 0) {
+            setWorkerMovements(prev => ({
+                ...prev,
+                W001: {
+                    x: zigzagPath[0].x,
+                    y: zigzagPath[0].y,
+                    direction: 0
+                }
+            }));
+        }
+    }, [linePath]);
+
+    // W001 이동 애니메이션 (10초마다 한 스텝)
+    useEffect(() => {
+        if (w001Path.length === 0) return;
+
+        const interval = setInterval(() => {
+            setW001CurrentIndex(prevIndex => {
+                let nextIndex;
+                let newForward = w001Forward;
+
+                if (w001Forward) {
+                    nextIndex = prevIndex + 1;
+                    if (nextIndex >= w001Path.length - 1) {
+                        newForward = false;
+                        nextIndex = w001Path.length - 2;
+                    }
+                } else {
+                    nextIndex = prevIndex - 1;
+                    if (nextIndex <= 0) {
+                        newForward = true;
+                        nextIndex = 1;
+                    }
+                }
+
+                setW001Forward(newForward);
+
+                // 현재 위치와 다음 위치로 방향 계산
+                const currentPos = w001Path[nextIndex];
+                let direction;
+                
+                // 경로의 끝에 도달했는지 확인
+                if ((newForward && nextIndex >= w001Path.length - 1) || (!newForward && nextIndex <= 0)) {
+                    // 경로의 끝에서는 이전 방향을 유지
+                    const prevPos = w001Path[prevIndex];
+                    if (prevPos && currentPos) {
+                        const dx = currentPos.x - prevPos.x;
+                        const dy = currentPos.y - prevPos.y;
+                        direction = Math.atan2(dy, dx) * 180 / Math.PI;
+                        // CSS 회전 각도로 변환 (0도 = 오른쪽)
+                        if (direction < 0) direction += 360;
+                    } else {
+                        direction = newForward ? 0 : 180; // 기본 방향
+                    }
+                } else {
+                    // 다음 위치로의 방향 계산
+                    const nextNextIndex = newForward ? nextIndex + 1 : nextIndex - 1;
+                    const nextPos = w001Path[nextNextIndex];
+                    
+                    if (currentPos && nextPos) {
+                        const dx = nextPos.x - currentPos.x;
+                        const dy = nextPos.y - currentPos.y;
+                        direction = Math.atan2(dy, dx) * 180 / Math.PI;
+                        // CSS 회전 각도로 변환 (0도 = 오른쪽)
+                        if (direction < 0) direction += 360;
+                    } else {
+                        direction = newForward ? 0 : 180; // 기본 방향
+                    }
+                }
+
+                // W001 위치 업데이트 (현재 위치로)
+                setWorkerMovements(prev => ({
+                    ...prev,
+                    W001: {
+                        x: currentPos.x,
+                        y: currentPos.y,
+                        direction: direction
+                    }
+                }));
+
+                // Trail 업데이트 (이전 위치에서 현재 위치로)
+                const prevPos = w001Path[prevIndex];
+                if (prevPos && currentPos) {
+                    setW001Trail(prev => [...prev, { from: prevPos, to: currentPos, direction }]);
+                }
+
+                return nextIndex;
+            });
+        }, 10000); // 10초마다 한 스텝
+
+        return () => clearInterval(interval);
+    }, [w001Path, w001Forward]);
+
+    // 나머지 작업자 이동 로직
     useEffect(() => {
         const intervals = {};
         
         workerPositions.forEach((worker, index) => {
             const workerId = worker.workerId;
             
-            // 연결 상태가 'disconnected'인 경우 움직이지 않음
-            if (worker.connectionStatus === 'disconnected') {
-                // 정지 상태로 초기 위치 설정
-                const basePositions = [
-                    { x: -200, y: -100 },  // W001 - 좌상단
-                    { x: 200, y: -100 },   // W002 - 우상단
-                    { x: 0, y: 150 },      // W003 - 하단 중앙
-                    { x: -200, y: 100 },   // W004 - 좌하단
-                    { x: 200, y: 100 },    // W005 - 우하단
-                    { x: 0, y: -150 }      // W006 - 상단 중앙
-                ];
-                
-                const basePos = basePositions[index] || { x: 0, y: 0 };
-                
-                setWorkerMovements(prev => ({
-                    ...prev,
-                    [workerId]: {
-                        x: basePos.x,
-                        y: basePos.y,
-                        direction: 0
-                    }
-                }));
-                return; // 연결이 끊어진 작업자는 움직이지 않음
+            if (workerId === 'W001' || worker.connectionStatus === 'disconnected') {
+                return;
             }
             
-            // 연결된 작업자만 움직임
             const basePositions = [
-                { x: -200, y: -100 },  // W001 - 좌상단
                 { x: 200, y: -100 },   // W002 - 우상단
                 { x: 0, y: 150 },      // W003 - 하단 중앙
                 { x: -200, y: 100 },   // W004 - 좌하단
@@ -159,33 +292,19 @@ const WebMain = ({ onLogout }) => {
                 { x: 0, y: -150 }      // W006 - 상단 중앙
             ];
             
-            const basePos = basePositions[index] || { x: 0, y: 0 };
+            const basePos = basePositions[index - 1] || { x: 0, y: 0 };
+            const initialDirections = [135, 225, 315, 90, 270];
             
-            // 각 작업자별 다른 초기 방향 설정
-            const initialDirections = [45, 135, 225, 315, 90, 270]; // 각 작업자별 다른 시작 방향
-            
-            // 초기 위치 설정
             setWorkerMovements(prev => ({
                 ...prev,
                 [workerId]: {
                     x: basePos.x,
                     y: basePos.y,
-                    direction: initialDirections[index] || 0
+                    direction: initialDirections[index - 1] || 0
                 }
             }));
             
-            // 각 작업자별 다른 이동 패턴 설정 (작은 움직임)
             const movementPatterns = [
-                // W001 - 작은 원형 이동
-                [
-                    { x: basePos.x, y: basePos.y },
-                    { x: basePos.x + 15, y: basePos.y - 10 },
-                    { x: basePos.x + 20, y: basePos.y + 5 },
-                    { x: basePos.x + 10, y: basePos.y + 15 },
-                    { x: basePos.x - 8, y: basePos.y + 12 },
-                    { x: basePos.x - 12, y: basePos.y - 3 },
-                    { x: basePos.x, y: basePos.y }
-                ],
                 // W002 - 작은 대각선 이동
                 [
                     { x: basePos.x, y: basePos.y },
@@ -238,23 +357,24 @@ const WebMain = ({ onLogout }) => {
                 ]
             ];
             
-            const path = movementPatterns[index] || movementPatterns[0];
+            const path = movementPatterns[index - 1] || movementPatterns[0];
             let currentIndex = 0;
             
-            // 각 작업자별 다른 주기 설정 (7초대 2개, 10초대 2개, 12초대 1개)
-            const intervals = [7000, 7500, 10000, 10500, 12000, 8000];
-            const interval = intervals[index] || 7000;
+            const intervals = [7500, 10000, 10500, 12000, 8000];
+            const interval = intervals[index - 1] || 7000;
             
             intervals[workerId] = setInterval(() => {
                 const nextIndex = (currentIndex + 1) % path.length;
-                const currentPos = path[currentIndex];
-                const nextPos = path[nextIndex];
+                const currentPos = path[nextIndex];
+                const nextNextIndex = (nextIndex + 1) % path.length;
+                const nextPos = path[nextNextIndex];
                 
-                // 이동 방향 계산 (각도) - 현재 위치에서 다음 위치로의 방향
-                const direction = Math.atan2(
-                    nextPos.y - currentPos.y,
-                    nextPos.x - currentPos.x
-                ) * 180 / Math.PI + 90; // 90도 회전하여 화살표가 올바른 방향을 가리키도록
+                // 현재 위치에서 다음 위치로의 방향 계산 (미래 방향)
+                const dx = nextPos.x - currentPos.x;
+                const dy = nextPos.y - currentPos.y;
+                let direction = Math.atan2(dy, dx) * 180 / Math.PI;
+                // CSS 회전 각도로 변환 (0도 = 오른쪽)
+                if (direction < 0) direction += 360;
                 
                 setWorkerMovements(prev => ({
                     ...prev,
@@ -274,18 +394,18 @@ const WebMain = ({ onLogout }) => {
         };
     }, [workerPositions]);
 
-    // 이동 시 trail도 함께 업데이트
+    // 나머지 작업자 trail 업데이트
     useEffect(() => {
         const intervals = {};
         workerPositions.forEach((worker, index) => {
             const workerId = worker.workerId;
-            if (worker.connectionStatus === 'disconnected') return;
-            let currentTrail = workerTrails[workerId] || [];
+            if (workerId === 'W001' || worker.connectionStatus === 'disconnected') return;
+            
             intervals[workerId] = setInterval(() => {
                 setWorkerMovements(prev => {
                     const movement = prev[workerId];
                     if (!movement) return prev;
-                    // trail에 현재 위치 추가
+                    
                     setWorkerTrails(trails => ({
                         ...trails,
                         [workerId]: [...(trails[workerId] || []), { x: movement.x, y: movement.y }]
@@ -297,9 +417,16 @@ const WebMain = ({ onLogout }) => {
         return () => Object.values(intervals).forEach(clearInterval);
     }, [workerPositions, workerMovements, workerTrails]);
 
-    // linePath.json 불러오기 (이미 import됨)
-    // const linePath = linePathData.linePath; // 제거
-
+    // 작업자별 색상 반환 함수
+    const getWorkerColor = (workerId) => {
+        if (workerId === 'W001') return '#28a745';
+        if (workerId === 'W002') return '#6c757d';
+        if (workerId === 'W003') return '#ffffff';
+        if (workerId === 'W004') return '#ff8c00';
+        if (workerId === 'W005') return '#dc3545';
+        if (workerId === 'W006') return '#007bff';
+        return '#6c757d';
+    };
 
     // 지도 이동 함수들
     const moveMapLeft = () => {
@@ -529,34 +656,23 @@ const WebMain = ({ onLogout }) => {
 
                 {/* 작업자 위치 표시 */}
                 {workerPositions.map((worker, index) => {
-                    // 각 작업자별로 다른 위치에 배치 (간단한 방식)
-                    const positions = [
-                        { x: -150, y: -80 },  // W001
-                        { x: 150, y: -80 },   // W002
-                        { x: 0, y: 120 },     // W003
-                        { x: -150, y: 80 },   // W004
-                        { x: 150, y: 80 },    // W005
-                        { x: 0, y: -120 }     // W006
-                    ];
+                    const workerId = worker.workerId;
+                    const movement = workerMovements[workerId];
                     
-                    const movement = workerMovements[worker.workerId];
-                    const screenX = movement ? movement.x : (positions[index]?.x || 0);
-                    const screenY = movement ? movement.y : (positions[index]?.y || 0);
-                    const direction = movement ? movement.direction : 0;
+                    if (!movement) return null;
                     
-                    // 작업 상태에 따른 색상 결정
                     const getWorkerColor = (workStatus) => {
                         switch (workStatus) {
                             case '작업중':
-                                return '#28a745'; // 초록색
+                                return '#28a745';
                             case '작업일시중지':
-                                return '#ff8c00'; // 주황색
+                                return '#ff8c00';
                             case '완료':
-                                return '#ffffff'; // 흰색
+                                return '#ffffff';
                             case 'SOS':
-                                return '#dc3545'; // 빨간색
+                                return '#dc3545';
                             default:
-                                return '#6c757d'; // 회색 (기본값)
+                                return '#6c757d';
                         }
                     };
                     
@@ -568,8 +684,8 @@ const WebMain = ({ onLogout }) => {
                             key={worker.workerId}
                             style={{
                                 position: 'absolute',
-                                top: `calc(50% + ${screenY + mapOffset.y}px)`,
-                                left: `calc(50% + ${screenX + mapOffset.x}px)`,
+                                left: movement.x * scaleX,
+                                top: movement.y * scaleY,
                                 width: '16px',
                                 height: '16px',
                                 backgroundColor: workerColor,
@@ -589,7 +705,6 @@ const WebMain = ({ onLogout }) => {
                                     labelDiv.style.opacity = '1';
                                 }
                                 
-                                // 모달 표시
                                 setSelectedWorker(worker);
                                 setModalPosition({
                                     x: e.clientX + 10,
@@ -604,7 +719,6 @@ const WebMain = ({ onLogout }) => {
                                     labelDiv.style.opacity = '0';
                                 }
                                 
-                                // 모달 숨김
                                 setTimeout(() => {
                                     setShowModal(false);
                                     setSelectedWorker(null);
@@ -661,10 +775,10 @@ const WebMain = ({ onLogout }) => {
                                 left: '50%',
                                 width: '0',
                                 height: '0',
-                                borderLeft: '4px solid transparent',
-                                borderRight: '4px solid transparent',
-                                borderBottom: '8px solid rgba(255, 255, 255, 0.9)',
-                                transform: `translate(-50%, -50%) rotate(${direction}deg) translateY(-12px)`,
+                                borderTop: '3px solid transparent',
+                                borderBottom: '3px solid transparent',
+                                borderLeft: '6px solid rgba(255, 255, 255, 0.9)',
+                                transform: `translate(-50%, -50%) rotate(${movement.direction}deg) translateX(12px)`,
                                 zIndex: 9997,
                                 transition: 'transform 0.3s ease',
                                 filter: 'drop-shadow(0 0 2px rgba(0, 0, 0, 0.6))',
@@ -672,7 +786,7 @@ const WebMain = ({ onLogout }) => {
                             }} />
                         </div>
                     );
-                }                )}
+                })}
 
                 {/* linePath 경로 점 시각화 (파란색 원 + 인덱스) */}
                 {linePath && linePath.map((pt, idx) => (
@@ -705,16 +819,16 @@ const WebMain = ({ onLogout }) => {
                   </div>
                 ))}
 
-                {/* 작업자 dash 이동 경로 표시 (SVG polyline) */}
-                {Object.entries(workerTrails).map(([workerId, trail], idx) => (
+                {/* 작업자 dash 이동 경로 표시 (SVG polyline, 작업자별 색상) */}
+                {Object.entries(workerTrails).map(([workerId, trail]) => (
                   <svg
                     key={workerId}
                     width={containerSize.width}
                     height={containerSize.height}
                     style={{
                       position: 'absolute',
-                      left: mapOffset.x,
-                      top: mapOffset.y,
+                      left: 0,
+                      top: 0,
                       pointerEvents: 'none',
                       zIndex: 15000
                     }}
@@ -722,29 +836,77 @@ const WebMain = ({ onLogout }) => {
                     <polyline
                       points={trail.map(pt => `${pt.x * scaleX},${pt.y * scaleY}`).join(' ')}
                       fill="none"
-                      stroke="#00e0ff"
-                      strokeWidth="8"
-                      strokeDasharray="18 12"
-                      opacity="0.7"
+                      stroke={getWorkerColor(workerId)}
+                      strokeWidth={4 * scaleX}
+                      strokeDasharray="8 6"
+                      opacity="0.6"
                     />
                   </svg>
                 ))}
 
+                {/* W001의 dash trail(가늘게, 초록색) */}
+                {w001Trail.map((seg, idx) =>
+  seg && seg.from && seg.to ? (
+    <svg
+      key={idx}
+      width={containerSize.width}
+      height={containerSize.height}
+      style={{
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        pointerEvents: 'none',
+        zIndex: 15000
+      }}
+    >
+      <polyline
+        points={`${seg.from.x * scaleX},${seg.from.y * scaleY} ${seg.to.x * scaleX},${seg.to.y * scaleY}`}
+        fill="none"
+        stroke="#28a745"
+        strokeWidth={2 * scaleX}
+        strokeDasharray="6 4"
+        opacity="0.8"
+      />
+    </svg>
+  ) : null
+)}
+
                 {/* linePath.json 불러오기 (이미 import됨) */}
-                {linePath.length > 1 && (
+                {linePath.length > 10 && (
                   <svg
                     width={containerSize.width}
                     height={containerSize.height}
                     style={{
                       position: 'absolute',
-                      left: mapOffset.x,
-                      top: mapOffset.y,
+                      left: 0,
+                      top: 0,
                       pointerEvents: 'none',
                       zIndex: 12000
                     }}
                   >
+                    {/* 0~4번까지 연결 */}
                     <polyline
-                      points={linePath.map(pt => `${pt.x * scaleX},${pt.y * scaleY}`).join(' ')}
+                      points={linePath.slice(0, 5).map(pt => `${pt.x * scaleX},${pt.y * scaleY}`).join(' ')}
+                      fill="none"
+                      stroke="#ff2222"
+                      strokeWidth={14 * scaleX}
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
+                      opacity="0.85"
+                    />
+                    {/* 5~9번까지 연결 */}
+                    <polyline
+                      points={linePath.slice(5, 10).map(pt => `${pt.x * scaleX},${pt.y * scaleY}`).join(' ')}
+                      fill="none"
+                      stroke="#ff2222"
+                      strokeWidth={14 * scaleX}
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
+                      opacity="0.85"
+                    />
+                    {/* 10~끝까지 연결 */}
+                    <polyline
+                      points={linePath.slice(10).map(pt => `${pt.x * scaleX},${pt.y * scaleY}`).join(' ')}
                       fill="none"
                       stroke="#ff2222"
                       strokeWidth={14 * scaleX}
@@ -754,6 +916,33 @@ const WebMain = ({ onLogout }) => {
                     />
                   </svg>
                 )}
+
+
+                {w001Trail.map((seg, idx) =>
+  seg && seg.from && seg.to ? (
+    <svg
+      key={idx}
+      width={containerSize.width}
+      height={containerSize.height}
+      style={{
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        pointerEvents: 'none',
+        zIndex: 15000
+      }}
+    >
+      <polyline
+        points={`${seg.from.x * scaleX},${seg.from.y * scaleY} ${seg.to.x * scaleX},${seg.to.y * scaleY}`}
+        fill="none"
+        stroke="#28a745"
+        strokeWidth={3 * scaleX}
+        strokeDasharray="10 8"
+        opacity="0.9"
+      />
+    </svg>
+  ) : null
+)}
 
                 {/* 작업자 정보 모달 */}
                 {showModal && selectedWorker && (
