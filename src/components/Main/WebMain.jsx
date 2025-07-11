@@ -34,6 +34,24 @@ const WebMain = ({ onLogout }) => {
     const [workerTrails, setWorkerTrails] = useState({ W001: [] }); // { W001: [ {from, to}, ... ] }
     // (중복 선언 제거) w001Pos는 아래에서만 선언
 
+    // === [추적 기능 상태 추가] ===
+    const [trackedWorkers, setTrackedWorkers] = useState(new Set()); // 추적 중인 작업자들
+    const [showTrails, setShowTrails] = useState(false); // 경로 표시 여부
+
+    // 추적 토글 함수
+    const toggleTracking = (workerId) => {
+        setTrackedWorkers(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(workerId)) {
+                newSet.delete(workerId);
+            } else {
+                newSet.add(workerId);
+            }
+            return newSet;
+        });
+        setShowTrails(true);
+    };
+
     // W001 불규칙 지그재그 경로 생성 함수
     const generateIrregularZigzagPath = (start, end, steps = 40) => {
         const zigzagAmplitude = 15; // 지그재그 크기
@@ -815,7 +833,7 @@ const WebMain = ({ onLogout }) => {
           borderRadius: 8,
           boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
           zIndex: 20000,
-          minWidth: 260,
+          minWidth: 320,
           fontSize: 12,
           padding: '10px 14px',
           maxHeight: 320,
@@ -833,6 +851,7 @@ const WebMain = ({ onLogout }) => {
               <th style={{ padding: '2px 4px', borderBottom: '1px solid #e0e0e0', fontWeight: 600 }}>연결</th>
               <th style={{ padding: '2px 4px', borderBottom: '1px solid #e0e0e0', fontWeight: 600 }}>위치</th>
               <th style={{ padding: '2px 4px', borderBottom: '1px solid #e0e0e0', fontWeight: 600 }}>활동</th>
+              <th style={{ padding: '2px 4px', borderBottom: '1px solid #e0e0e0', fontWeight: 600 }}>추적하기</th>
             </tr>
           </thead>
           <tbody>
@@ -843,6 +862,24 @@ const WebMain = ({ onLogout }) => {
                 <td style={{ padding: '2px 4px', textAlign: 'center', color: w.connectionStatus === 'connected' ? '#28a745' : '#dc3545', fontWeight: 600 }}>{w.connectionStatus === 'connected' ? '연결' : '끊김'}</td>
                 <td style={{ padding: '2px 4px', textAlign: 'center' }}>{w.location}</td>
                 <td style={{ padding: '2px 4px', textAlign: 'center' }}>{w.activity}</td>
+                <td style={{ padding: '2px 4px', textAlign: 'center' }}>
+                  <button
+                    onClick={() => toggleTracking(w.workerId)}
+                    style={{
+                      padding: '2px 6px',
+                      fontSize: 10,
+                      border: 'none',
+                      borderRadius: 4,
+                      cursor: 'pointer',
+                      backgroundColor: trackedWorkers.has(w.workerId) ? '#dc3545' : '#28a745',
+                      color: 'white',
+                      fontWeight: 'bold',
+                      minWidth: 50
+                    }}
+                  >
+                    {trackedWorkers.has(w.workerId) ? '중지' : '추적'}
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -1082,30 +1119,34 @@ const WebMain = ({ onLogout }) => {
                   )
                 ))}
 
-                {/* 작업자 dash 이동 경로 표시 (SVG polyline, 작업자별 색상) */}
-                {Object.entries(workerTrails).map(([workerId, trail]) => (
-                  <svg
-                    key={workerId}
-                    width={containerSize.width}
-                    height={containerSize.height}
-                    style={{
-                      position: 'absolute',
-                      left: 0,
-                      top: 0,
-                      pointerEvents: 'none',
-                      zIndex: 15000
-                    }}
-                  >
-                    <polyline
-                      points={trail.map(pt => `${pt.x * scaleX},${pt.y * scaleY}`).join(' ')}
-                      fill="none"
-                      stroke={getWorkerColor(workerId)}
-                      strokeWidth={2 * scaleX}
-                      strokeDasharray="8 6"
-                      opacity="0.7"
-                    />
-                  </svg>
-                ))}
+                {/* 작업자 이동 경로 (trail) - 추적 중인 작업자만 표시 */}
+                {showTrails && Object.entries(workerTrails).map(([workerId, trail]) => {
+                    if (!trackedWorkers.has(workerId) || trail.length < 2) return null;
+                    
+                    return (
+                        <svg
+                            key={workerId}
+                            width={containerSize.width}
+                            height={containerSize.height}
+                            style={{
+                                position: 'absolute',
+                                left: 0,
+                                top: 0,
+                                pointerEvents: 'none',
+                                zIndex: 15000
+                            }}
+                        >
+                            <polyline
+                                points={trail.map(pt => `${pt.x * scaleX},${pt.y * scaleY}`).join(' ')}
+                                fill="none"
+                                stroke={getWorkerColor(workerId)}
+                                strokeWidth={2 * scaleX}
+                                strokeDasharray="8 6"
+                                opacity="0.7"
+                            />
+                        </svg>
+                    );
+                })}
 
                 {/* W001의 dash trail(가늘게, 초록색) */}
                 {/* 아래는 중복이므로 주석처리 (위에서 dash로 통일) */}
@@ -1180,31 +1221,32 @@ const WebMain = ({ onLogout }) => {
                 )} */}
 
 
-                {w001Trail.map((seg, idx) =>
-  seg && seg.from && seg.to ? (
-    <svg
-      key={idx}
-      width={containerSize.width}
-      height={containerSize.height}
-      style={{
-        position: 'absolute',
-        left: 0,
-        top: 0,
-        pointerEvents: 'none',
-        zIndex: 15000
-      }}
-    >
-      <polyline
-        points={`${seg.from.x * scaleX},${seg.from.y * scaleY} ${seg.to.x * scaleX},${seg.to.y * scaleY}`}
-        fill="none"
-        stroke="#28a745"
-        strokeWidth={2 * scaleX}
-        strokeDasharray="8 6"
-        opacity="0.7"
-      />
-    </svg>
-  ) : null
-)}
+                {/* W001의 dash trail - 추적 중일 때만 표시 */}
+                {showTrails && trackedWorkers.has('W001') && w001Trail.map((seg, idx) =>
+                    seg && seg.from && seg.to ? (
+                        <svg
+                            key={idx}
+                            width={containerSize.width}
+                            height={containerSize.height}
+                            style={{
+                                position: 'absolute',
+                                left: 0,
+                                top: 0,
+                                pointerEvents: 'none',
+                                zIndex: 15000
+                            }}
+                        >
+                            <polyline
+                                points={`${seg.from.x * scaleX},${seg.from.y * scaleY} ${seg.to.x * scaleX},${seg.to.y * scaleY}`}
+                                fill="none"
+                                stroke="#28a745"
+                                strokeWidth={2 * scaleX}
+                                strokeDasharray="8 6"
+                                opacity="0.7"
+                            />
+                        </svg>
+                    ) : null
+                )}
 
                 {/* 작업자 정보 모달 */}
                 {showModal && selectedWorker && (
