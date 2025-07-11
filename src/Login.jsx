@@ -31,7 +31,7 @@ const Login = ({ onLogin }) => {
                     <div className="logo-circle">
                         <span className="logo-text">R</span>
                     </div>
-                    <p className="app-subtitle" style={{textAlign:"right" ,fontSize:".7rem"}}>Saft City</p>
+                    <p className="app-subtitle" style={{textAlign:"right" ,fontSize:".7rem"}}>Safe City</p>
                     <h1 className="app-title"> 
                         {/* <span> 여기 아이콘 </span> */}
                         철도작업알림 시스템

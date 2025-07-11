@@ -105,55 +105,8 @@
           "workEndTime": null,
           "completionRate": 33
         }
-      },
-      {
-        "workerId": "W005",
-        "connectionStatus": "connected",
-        "currentTaskName": "긴급 상황",
-        "workStatus": "SOS",
-        "taskList": [
-          {
-            "taskNumber": 1,
-            "taskName": "긴급 상황 대응",
-            "taskStatus": "in_progress"
-          }
-        ],
-        "workCompletion": {
-          "isCompleted": false,
-          "workStartTime": "2024-01-15T10:15:00Z",
-          "workEndTime": null,
-          "completionRate": 0
-        }
-      },
-      {
-        "workerId": "W006",
-        "connectionStatus": "connected",
-        "currentTaskName": "품질검사",
-        "workStatus": "작업중",
-        "taskList": [
-          {
-            "taskNumber": 1,
-            "taskName": "원자재 검수",
-            "taskStatus": "completed"
-          },
-          {
-            "taskNumber": 2,
-            "taskName": "품질검사",
-            "taskStatus": "in_progress"
-          },
-          {
-            "taskNumber": 3,
-            "taskName": "최종 검수",
-            "taskStatus": "pending"
-          }
-        ],
-        "workCompletion": {
-          "isCompleted": false,
-          "workStartTime": "2024-01-15T09:15:00Z",
-          "workEndTime": null,
-          "completionRate": 67
-        }
       }
+      
     ],
     "systemInfo": {
       "totalWorkers": 6,
