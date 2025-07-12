@@ -1,14 +1,14 @@
 {
   "files": {
     "main.css": "/RAILWAY_FRONT/static/css/main.9cb64402.css",
-    "main.js": "/RAILWAY_FRONT/static/js/main.ce5200fe.js",
+    "main.js": "/RAILWAY_FRONT/static/js/main.7f19bbf7.js",
     "static/media/logo.svg": "/RAILWAY_FRONT/static/media/logo.6ce24c58023cc2f8fd88fe9d219db6c6.svg",
     "index.html": "/RAILWAY_FRONT/index.html",
     "main.9cb64402.css.map": "/RAILWAY_FRONT/static/css/main.9cb64402.css.map",
-    "main.ce5200fe.js.map": "/RAILWAY_FRONT/static/js/main.ce5200fe.js.map"
+    "main.7f19bbf7.js.map": "/RAILWAY_FRONT/static/js/main.7f19bbf7.js.map"
   },
   "entrypoints": [
     "static/css/main.9cb64402.css",
-    "static/js/main.ce5200fe.js"
+    "static/js/main.7f19bbf7.js"
   ]
 }
