@@ -37,6 +37,8 @@ const WebMain = ({ onLogout }) => {
     // === [추적 기능 상태 추가] ===
     const [trackedWorkers, setTrackedWorkers] = useState(new Set()); // 추적 중인 작업자들
     const [showTrails, setShowTrails] = useState(false); // 경로 표시 여부
+    const [predictedWorkers, setPredictedWorkers] = useState(new Set()); // 예측 경로 표시 중인 작업자들
+    const [predictionTime, setPredictionTime] = useState(5); // 예측 시간 (분)
 
     // 추적 토글 함수
     const toggleTracking = (workerId) => {
@@ -50,6 +52,54 @@ const WebMain = ({ onLogout }) => {
             return newSet;
         });
         setShowTrails(true);
+    };
+
+    // 예측 경로 토글 함수
+    const togglePrediction = (workerId) => {
+        setPredictedWorkers(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(workerId)) {
+                newSet.delete(workerId);
+            } else {
+                newSet.add(workerId);
+            }
+            return newSet;
+        });
+    };
+
+    // 예측 경로 생성 함수 - 작업자별 다른 불규칙한 지그재그 경로
+    const generatePredictedPath = (currentPos, timeMinutes, workerId) => {
+        const predictions = [];
+        
+        // 작업자별 다른 기본 방향과 패턴
+        const workerPatterns = {
+            'W001': { baseAngle: 0, zigzagIntensity: 20, zigzagFreq: 0.8 },      // 동쪽, 중간 지그재그
+            'W002': { baseAngle: 45, zigzagIntensity: 15, zigzagFreq: 1.2 },     // 북동쪽, 약간 지그재그
+            'W003': { baseAngle: 180, zigzagIntensity: 25, zigzagFreq: 0.6 },    // 서쪽(반대방향), 강한 지그재그
+            'W004': { baseAngle: 15, zigzagIntensity: 18, zigzagFreq: 1.0 },     // 북동쪽, 중간 지그재그
+            'W005': { baseAngle: -15, zigzagIntensity: 12, zigzagFreq: 1.5 },    // 남동쪽, 약간 지그재그
+            'W006': { baseAngle: 60, zigzagIntensity: 22, zigzagFreq: 0.7 }      // 북동쪽, 강한 지그재그
+        };
+        
+        const pattern = workerPatterns[workerId] || { baseAngle: 0, zigzagIntensity: 15, zigzagFreq: 1.0 };
+        const baseDistance = 150; // 기본 거리
+        
+        // 항상 5분, 15분, 30분 후 위치 계산
+        const timePoints = [5, 15, 30];
+        
+        timePoints.forEach((time, index) => {
+            const distance = baseDistance * (time / 30); // 시간에 비례한 거리
+            
+            // 작업자별 다른 불규칙한 지그재그 효과
+            const zigzagOffset = Math.sin(index * pattern.zigzagFreq + Math.random() * 0.5) * pattern.zigzagIntensity;
+            
+            const x = currentPos.x + Math.cos(pattern.baseAngle * Math.PI / 180) * distance;
+            const y = currentPos.y + Math.sin(pattern.baseAngle * Math.PI / 180) * distance + zigzagOffset;
+            
+            predictions.push({ x, y, time });
+        });
+        
+        return predictions;
     };
 
     // W001 불규칙 지그재그 경로 생성 함수
@@ -833,7 +883,7 @@ const WebMain = ({ onLogout }) => {
           borderRadius: 8,
           boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
           zIndex: 20000,
-          minWidth: 320,
+          minWidth: 420,
           fontSize: 12,
           padding: '10px 14px',
           maxHeight: 320,
@@ -843,6 +893,7 @@ const WebMain = ({ onLogout }) => {
         <div style={{ fontWeight: 'bold', fontSize: 14, marginBottom: 6, color: '#333', textAlign: 'center' }}>
           작업자 상태
         </div>
+
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: '#f5f7fa' }}>
@@ -852,6 +903,7 @@ const WebMain = ({ onLogout }) => {
               <th style={{ padding: '2px 4px', borderBottom: '1px solid #e0e0e0', fontWeight: 600 }}>위치</th>
               <th style={{ padding: '2px 4px', borderBottom: '1px solid #e0e0e0', fontWeight: 600 }}>활동</th>
               <th style={{ padding: '2px 4px', borderBottom: '1px solid #e0e0e0', fontWeight: 600 }}>추적하기</th>
+              <th style={{ padding: '2px 4px', borderBottom: '1px solid #e0e0e0', fontWeight: 600 }}>예측경로</th>
             </tr>
           </thead>
           <tbody>
@@ -878,6 +930,24 @@ const WebMain = ({ onLogout }) => {
                     }}
                   >
                     {trackedWorkers.has(w.workerId) ? '중지' : '추적'}
+                  </button>
+                </td>
+                <td style={{ padding: '2px 4px', textAlign: 'center' }}>
+                  <button
+                    onClick={() => togglePrediction(w.workerId)}
+                    style={{
+                      padding: '2px 6px',
+                      fontSize: 10,
+                      border: 'none',
+                      borderRadius: 4,
+                      cursor: 'pointer',
+                      backgroundColor: predictedWorkers.has(w.workerId) ? '#dc3545' : '#17a2b8',
+                      color: 'white',
+                      fontWeight: 'bold',
+                      minWidth: 50
+                    }}
+                  >
+                    {predictedWorkers.has(w.workerId) ? '중지' : '예측'}
                   </button>
                 </td>
               </tr>
@@ -983,20 +1053,21 @@ const WebMain = ({ onLogout }) => {
                                 position: 'absolute',
                                 left: movement.x * scaleX,
                                 top: movement.y * scaleY,
-                                width: '16px',
-                                height: '16px',
+                                width: '20px',
+                                height: '20px',
                                 backgroundColor: workerColor,
                                 borderRadius: '50%',
                                 transform: 'translate(-50%, -50%)',
                                 zIndex: 9999,
-                                boxShadow: `0 0 8px ${workerColor === '#ffffff' ? 'rgba(0, 0, 0, 0.8)' : workerColor + '80'}, 0 0 16px ${workerColor === '#ffffff' ? 'rgba(0, 0, 0, 0.4)' : workerColor + '40'}`,
-                                border: workerColor === '#ffffff' ? '2px solid #000000' : '2px solid rgba(255, 255, 255, 0.8)',
+                                boxShadow: `0 0 12px ${workerColor === '#ffffff' ? 'rgba(0, 0, 0, 0.9)' : workerColor + '90'}, 0 0 24px ${workerColor === '#ffffff' ? 'rgba(0, 0, 0, 0.6)' : workerColor + '50'}, 0 0 36px ${workerColor === '#ffffff' ? 'rgba(0, 0, 0, 0.3)' : workerColor + '30'}`,
+                                border: workerColor === '#ffffff' ? '3px solid #000000' : '3px solid rgba(255, 255, 255, 0.9)',
                                 cursor: 'pointer',
-                                transition: 'all 0.3s ease'
+                                transition: 'all 0.3s ease',
+                                animation: 'worker-pulse 2s infinite'
                             }}
                             title={`${worker.workerId} - ${worker.location} (${worker.activity}) - ${worker.workStatus}`}
                             onMouseEnter={(e) => {
-                                e.target.style.transform = 'translate(-50%, -50%) scale(1.2)';
+                                e.target.style.transform = 'translate(-50%, -50%) scale(1.3)';
                                 const labelDiv = e.target.querySelector('div');
                                 if (labelDiv) {
                                     labelDiv.style.opacity = '1';
@@ -1024,18 +1095,21 @@ const WebMain = ({ onLogout }) => {
                         >
                             <div style={{
                                 position: 'absolute',
-                                top: '-25px',
+                                top: '-30px',
                                 left: '50%',
                                 transform: 'translateX(-50%)',
-                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                backgroundColor: 'rgba(0, 0, 0, 0.9)',
                                 color: 'white',
-                                padding: '4px 8px',
-                                borderRadius: '4px',
-                                fontSize: '10px',
+                                padding: '6px 10px',
+                                borderRadius: '6px',
+                                fontSize: '11px',
+                                fontWeight: 'bold',
                                 whiteSpace: 'nowrap',
                                 opacity: 0,
                                 transition: 'opacity 0.3s ease',
-                                pointerEvents: 'none'
+                                pointerEvents: 'none',
+                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                                border: '1px solid rgba(255, 255, 255, 0.2)'
                             }}>
                                 {worker.workerId}
                             </div>
@@ -1044,22 +1118,23 @@ const WebMain = ({ onLogout }) => {
                             {worker.connectionStatus === 'disconnected' && (
                                 <div style={{
                                     position: 'absolute',
-                                    top: '-40px',
+                                    top: '-45px',
                                     left: '50%',
                                     transform: 'translateX(-50%)',
                                     backgroundColor: '#dc3545',
                                     color: 'white',
-                                    width: '20px',
-                                    height: '20px',
+                                    width: '24px',
+                                    height: '24px',
                                     borderRadius: '50%',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    fontSize: '14px',
+                                    fontSize: '16px',
                                     fontWeight: 'bold',
-                                    boxShadow: '0 0 8px rgba(220, 53, 69, 0.8)',
+                                    boxShadow: '0 0 12px rgba(220, 53, 69, 0.9), 0 0 24px rgba(220, 53, 69, 0.5)',
                                     animation: 'pulse-warning 1.5s infinite',
-                                    zIndex: 9998
+                                    zIndex: 9998,
+                                    border: '2px solid rgba(255, 255, 255, 0.8)'
                                 }}>
                                     !
                                 </div>
@@ -1072,13 +1147,13 @@ const WebMain = ({ onLogout }) => {
                                 left: '50%',
                                 width: '0',
                                 height: '0',
-                                borderTop: '3px solid transparent',
-                                borderBottom: '3px solid transparent',
-                                borderLeft: '6px solid rgba(255, 255, 255, 0.9)',
-                                transform: `translate(-50%, -50%) rotate(${movement.direction}deg) translateX(12px)`,
+                                borderTop: '4px solid transparent',
+                                borderBottom: '4px solid transparent',
+                                borderLeft: '8px solid rgba(255, 255, 255, 0.95)',
+                                transform: `translate(-50%, -50%) rotate(${movement.direction}deg) translateX(15px)`,
                                 zIndex: 9997,
                                 transition: 'transform 0.3s ease',
-                                filter: 'drop-shadow(0 0 2px rgba(0, 0, 0, 0.6))',
+                                filter: 'drop-shadow(0 0 3px rgba(0, 0, 0, 0.8))',
                                 pointerEvents: 'none'
                             }} />
                         </div>
@@ -1145,6 +1220,89 @@ const WebMain = ({ onLogout }) => {
                                 opacity="0.7"
                             />
                         </svg>
+                    );
+                })}
+
+                {/* 예측 경로 표시 - 직선 경로와 5분, 15분, 30분 후 O 표시 */}
+                {predictedWorkers.size > 0 && workerPositions.map((worker) => {
+                    if (!predictedWorkers.has(worker.workerId)) return null;
+                    
+                    const movement = workerMovements[worker.workerId];
+                    if (!movement) return null;
+                    
+                    const predictedPoints = generatePredictedPath({ x: movement.x, y: movement.y }, predictionTime, worker.workerId);
+                    const workerColor = getWorkerColor(worker.workerId);
+                    
+                    return (
+                        <div key={`prediction-${worker.workerId}`}>
+                            {/* 예측 경로 연결선들 */}
+                            {predictedPoints.length > 0 && (
+                                <svg
+                                    width={containerSize.width}
+                                    height={containerSize.height}
+                                    style={{
+                                        position: 'absolute',
+                                        left: 0,
+                                        top: 0,
+                                        pointerEvents: 'none',
+                                        zIndex: 14000
+                                    }}
+                                >
+                                    {/* 현재 위치에서 첫 번째 점까지 */}
+                                    <line
+                                        x1={(movement.x + 25) * scaleX}
+                                        y1={movement.y * scaleY}
+                                        x2={predictedPoints[0].x * scaleX}
+                                        y2={predictedPoints[0].y * scaleY}
+                                        stroke={workerColor}
+                                        strokeWidth={2 * scaleX}
+                                        strokeDasharray="8 4"
+                                        opacity="0.4"
+                                    />
+                                    
+                                    {/* 점들 사이 연결선 */}
+                                    {predictedPoints.map((pt, idx) => {
+                                        if (idx === 0) return null; // 첫 번째 점은 위에서 처리
+                                        return (
+                                            <line
+                                                key={`line-${worker.workerId}-${idx}`}
+                                                x1={predictedPoints[idx - 1].x * scaleX}
+                                                y1={predictedPoints[idx - 1].y * scaleY}
+                                                x2={pt.x * scaleX}
+                                                y2={pt.y * scaleY}
+                                                stroke={workerColor}
+                                                strokeWidth={2 * scaleX}
+                                                strokeDasharray="8 4"
+                                                opacity="0.4"
+                                            />
+                                        );
+                                    })}
+                                </svg>
+                            )}
+                            
+                            {/* 예측 경로 점들 (5분, 15분, 30분 후) */}
+                            {predictedPoints.map((pt, idx) => (
+                                <div
+                                    key={`prediction-dot-${worker.workerId}-${pt.time}`}
+                                    style={{
+                                        position: 'absolute',
+                                        left: pt.x * scaleX,
+                                        top: pt.y * scaleY,
+                                        width: '16px',
+                                        height: '16px',
+                                        backgroundColor: workerColor,
+                                        border: '2px solid rgba(255, 255, 255, 0.8)',
+                                        borderRadius: '50%',
+                                        transform: 'translate(-50%, -50%)',
+                                        zIndex: 14001,
+                                        boxShadow: `0 0 8px ${workerColor}80`,
+                                        opacity: 0.6,
+                                        animation: 'prediction-pulse 2s infinite'
+                                    }}
+                                    title={`${worker.workerId} - ${pt.time}분 후 예상 위치`}
+                                />
+                            ))}
+                        </div>
                     );
                 })}
 
@@ -1308,6 +1466,33 @@ const WebMain = ({ onLogout }) => {
 
                 <style>
                     {`
+                        @keyframes worker-pulse {
+                            0% {
+                                box-shadow: 0 0 12px rgba(40, 167, 69, 0.9), 0 0 24px rgba(40, 167, 69, 0.5), 0 0 36px rgba(40, 167, 69, 0.3);
+                            }
+                            50% {
+                                box-shadow: 0 0 20px rgba(40, 167, 69, 1), 0 0 40px rgba(40, 167, 69, 0.7), 0 0 60px rgba(40, 167, 69, 0.5);
+                            }
+                            100% {
+                                box-shadow: 0 0 12px rgba(40, 167, 69, 0.9), 0 0 24px rgba(40, 167, 69, 0.5), 0 0 36px rgba(40, 167, 69, 0.3);
+                            }
+                        }
+                        
+                        @keyframes prediction-pulse {
+                            0% {
+                                transform: translate(-50%, -50%) scale(1);
+                                opacity: 1;
+                            }
+                            50% {
+                                transform: translate(-50%, -50%) scale(1.3);
+                                opacity: 0.7;
+                            }
+                            100% {
+                                transform: translate(-50%, -50%) scale(1);
+                                opacity: 1;
+                            }
+                        }
+                        
                         @keyframes pulse {
                             0% {
                                 transform: translate(-50%, -50%) scale(1);
