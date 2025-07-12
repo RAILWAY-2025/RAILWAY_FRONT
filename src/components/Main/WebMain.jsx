@@ -67,22 +67,25 @@ const WebMain = ({ onLogout }) => {
         });
     };
 
-    // 예측 경로 생성 함수 - 작업자별 다른 불규칙한 지그재그 경로
-    const generatePredictedPath = (currentPos, timeMinutes, workerId) => {
+    // 예측 경로 생성 함수 - 현재 화살표 방향 기반 지그재그 경로
+    const generatePredictedPath = (currentPos, timeMinutes, workerId, currentDirection) => {
         const predictions = [];
         
-        // 작업자별 다른 기본 방향과 패턴
+        // 작업자별 지그재그 패턴 (방향은 현재 화살표 방향 사용)
         const workerPatterns = {
-            'W001': { baseAngle: 0, zigzagIntensity: 20, zigzagFreq: 0.8 },      // 동쪽, 중간 지그재그
-            'W002': { baseAngle: 45, zigzagIntensity: 15, zigzagFreq: 1.2 },     // 북동쪽, 약간 지그재그
-            'W003': { baseAngle: 180, zigzagIntensity: 25, zigzagFreq: 0.6 },    // 서쪽(반대방향), 강한 지그재그
-            'W004': { baseAngle: 15, zigzagIntensity: 18, zigzagFreq: 1.0 },     // 북동쪽, 중간 지그재그
-            'W005': { baseAngle: -15, zigzagIntensity: 12, zigzagFreq: 1.5 },    // 남동쪽, 약간 지그재그
-            'W006': { baseAngle: 60, zigzagIntensity: 22, zigzagFreq: 0.7 }      // 북동쪽, 강한 지그재그
+            'W001': { zigzagIntensity: 20, zigzagFreq: 0.8 },      // 중간 지그재그
+            'W002': { zigzagIntensity: 15, zigzagFreq: 1.2 },      // 약간 지그재그
+            'W003': { zigzagIntensity: 25, zigzagFreq: 0.6 },      // 강한 지그재그
+            'W004': { zigzagIntensity: 18, zigzagFreq: 1.0 },      // 중간 지그재그
+            'W005': { zigzagIntensity: 12, zigzagFreq: 1.5 },      // 약간 지그재그
+            'W006': { zigzagIntensity: 22, zigzagFreq: 0.7 }       // 강한 지그재그
         };
         
-        const pattern = workerPatterns[workerId] || { baseAngle: 0, zigzagIntensity: 15, zigzagFreq: 1.0 };
+        const pattern = workerPatterns[workerId] || { zigzagIntensity: 15, zigzagFreq: 1.0 };
         const baseDistance = 150; // 기본 거리
+        
+        // 현재 화살표 방향을 라디안으로 변환
+        const baseAngle = currentDirection * Math.PI / 180;
         
         // 항상 5분, 15분, 30분 후 위치 계산
         const timePoints = [5, 15, 30];
@@ -93,8 +96,8 @@ const WebMain = ({ onLogout }) => {
             // 작업자별 다른 불규칙한 지그재그 효과
             const zigzagOffset = Math.sin(index * pattern.zigzagFreq + Math.random() * 0.5) * pattern.zigzagIntensity;
             
-            const x = currentPos.x + Math.cos(pattern.baseAngle * Math.PI / 180) * distance;
-            const y = currentPos.y + Math.sin(pattern.baseAngle * Math.PI / 180) * distance + zigzagOffset;
+            const x = currentPos.x + Math.cos(baseAngle) * distance;
+            const y = currentPos.y + Math.sin(baseAngle) * distance + zigzagOffset;
             
             predictions.push({ x, y, time });
         });
@@ -1230,7 +1233,7 @@ const WebMain = ({ onLogout }) => {
                     const movement = workerMovements[worker.workerId];
                     if (!movement) return null;
                     
-                    const predictedPoints = generatePredictedPath({ x: movement.x, y: movement.y }, predictionTime, worker.workerId);
+                    const predictedPoints = generatePredictedPath({ x: movement.x, y: movement.y }, predictionTime, worker.workerId, movement.direction);
                     const workerColor = getWorkerColor(worker.workerId);
                     
                     return (
